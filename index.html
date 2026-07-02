@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Hétéro-questionnaires (usage soignant)</title>
+<style>
+:root{
+  --topbar-h:60px;
+  --ivory:#f3ecdf; --paper:#ffffff; --cream:#f5f0e7; --line:#dcd3c4;
+  --ink:#1f2540;
+  /* Accent piloté par questionnaire (par défaut : sarcelle "suite") */
+  --accent:#2c7a78; --accent-d:#1f5a58; --accent-l:#5aa3a0;
+  --tint:color-mix(in srgb,var(--accent) 14%,#fff);
+  --soft:color-mix(in srgb,var(--accent) 7%,#fff);
+  --accent-ink:color-mix(in srgb,var(--accent-d) 90%,#000);
+  --danger:#9c4221; --danger-soft:#fdf3ee; --danger-line:#efd9cb; --danger-ink:#6a4a3a;
+  --ok:#2f7d57; --ok-soft:#e9f4ee;
+  --shadow:0 1px 2px rgba(31,37,64,.06),0 8px 24px rgba(31,37,64,.07);
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--ivory);font-size:15px;line-height:1.55}
+a{color:var(--accent-d)}
+button{font-family:inherit}
+
+/* ===== Top bar ===== */
+.topbar{position:sticky;top:0;z-index:60;background:rgba(243,236,223,.94);backdrop-filter:saturate(1.2) blur(6px);border-bottom:1px solid var(--line)}
+.topbar .inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--accent-d);font-size:14.5px;background:none;border:0;cursor:pointer;padding:4px 2px}
+.brand .tag{font-size:10px;font-weight:800;color:#fff;background:var(--accent);padding:2px 9px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase}
+.hamburger{display:none;background:#fff;border:1px solid var(--line);border-radius:9px;width:36px;height:34px;cursor:pointer;align-items:center;justify-content:center;color:var(--accent-d)}
+.hamburger svg{width:18px;height:18px}
+
+.patientchip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;cursor:pointer;font-size:13px;color:var(--ink);max-width:46vw;overflow:hidden}
+.patientchip:hover{border-color:var(--accent-l)}
+.patientchip .av{width:22px;height:22px;border-radius:50%;background:var(--tint);color:var(--accent-d);font-weight:800;font-size:11px;display:grid;place-items:center;flex:none}
+.patientchip .who{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.patientchip .dob{color:#6a7188;white-space:nowrap}
+.patientchip.empty .who{color:#8a8f9e;font-weight:600}
+
+/* segmented toggle (Questionnaire / Cotation) */
+.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px}
+.seg button{border:0;background:none;cursor:pointer;font-weight:700;font-size:12px;color:var(--ink);padding:5px 11px;border-radius:999px;line-height:1.1;white-space:nowrap}
+.seg button.on{background:var(--accent);color:#fff;box-shadow:0 1px 3px rgba(31,37,64,.18)}
+.seg button:not(.on):hover{color:var(--accent-d)}
+
+.tools{margin-left:auto;display:flex;gap:8px;align-items:center;position:relative;flex-wrap:wrap}
+.tbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:12.5px;padding:6px 11px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.tbtn:hover{border-color:var(--accent-l)}
+.tbtn .ic{font-size:15px;line-height:1}
+.tbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.tbtn.primary:hover{background:var(--accent-d);border-color:var(--accent-d)}
+.tbtn .caret{font-size:10px;opacity:.6;margin-left:-2px}
+
+/* popover */
+.pop{position:absolute;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;min-width:230px;z-index:70;display:none}
+.pop.show{display:block}
+.pop .pitem{display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;border:0;background:none;cursor:pointer;padding:9px 11px;border-radius:9px}
+.pop .pitem:hover{background:var(--soft)}
+.pop .pitem:disabled{opacity:.4;cursor:not-allowed}
+.pop .pitem .t{font-weight:700;font-size:13.5px;color:var(--ink)}
+.pop .pitem .s{font-size:12px;color:#6a7188}
+.pop .sep{height:1px;background:var(--line);margin:4px 6px}
+
+/* ===== Layout: sidebar + main ===== */
+.layout{max-width:1240px;margin:0 auto;display:flex;align-items:flex-start}
+.sidebar{width:252px;flex:none;align-self:stretch;padding:18px 14px 40px;position:sticky;top:var(--topbar-h);max-height:calc(100vh - var(--topbar-h));overflow:auto}
+.sidebar .sb-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8a8f9e;margin:14px 8px 7px}
+.sidebar .sb-h-main{text-align:center;margin-top:10px}
+.sidebar .sb-cat{text-align:left;margin:13px 8px 5px}
+.sb-link{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:1px solid transparent;background:none;cursor:pointer;padding:9px 10px;border-radius:11px;color:var(--ink);font-size:14px}
+.sb-link:hover{background:#fff;border-color:var(--line)}
+.sb-link.active{background:#fff;border-color:var(--accent-l);box-shadow:var(--shadow)}
+.sb-link .dot{width:11px;height:11px;border-radius:50%;flex:none;background:var(--qc,#9aa0b4);box-shadow:0 0 0 3px color-mix(in srgb,var(--qc,#9aa0b4) 18%,#fff)}
+.sb-link .lab{flex:1;min-width:0}
+.sb-link .lab .nm{font-weight:700;line-height:1.15}
+.sb-link .lab .st{font-size:11.5px;color:#6a7188;margin-top:1px}
+.sb-link .chk{font-size:12px;font-weight:800;color:var(--ok)}
+.sb-link.home-link{font-weight:700;color:var(--accent-d)}
+.sb-link.home-link svg{width:17px;height:17px}
+.sb-foot{margin:18px 8px 0;font-size:11.5px;color:#9aa0b4;line-height:1.5}
+.sb-credit{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:10.5px;color:#a7adbe;line-height:1.45;font-style:italic}
+.sb-credit sup{font-style:normal}
+.sitefoot{text-align:center;font-size:11px;color:#a7adbe;padding:18px 16px 26px;line-height:1.5;border-top:1px solid var(--line);margin-top:8px;font-style:italic}
+.sitefoot sup{font-style:normal}
+
+main{flex:1;min-width:0;max-width:1000px;margin:0 auto;padding:20px 18px 120px}
+.scrim{display:none}
+
+
+.masthead{text-align:center;margin:8px 0 20px}
+.masthead .kicker{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-l)}
+.masthead h1{margin:8px 0 0;font-size:31px;font-weight:800;letter-spacing:-.012em;color:var(--accent-d);line-height:1.1}
+.masthead.small h1{font-size:25px}
+.masthead .subtitle{margin:7px auto 0;color:#6a7188;font-size:14px;font-weight:600;max-width:560px}
+.masthead .rule{width:52px;height:3px;border-radius:3px;background:var(--accent);margin:15px auto 0}
+.masthead .lead{margin:14px auto 0;color:#5b6178;font-weight:600;font-size:14.5px;max-width:560px}
+@media(max-width:620px){.masthead h1{font-size:25px}}
+
+.note{background:var(--cream);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:12px 15px;color:#4a4f66;font-size:13.8px;margin:14px 0 18px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px clamp(16px,3vw,26px);margin:0 0 18px}
+.card h2{margin:0 0 4px;font-size:18px;color:var(--accent-d)}
+.muted{color:#6a7188;font-size:13px}
+
+/* ===== Identity form ===== */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{margin:8px 0}
+.field label{font-weight:600;display:block;margin-bottom:4px;font-size:13.5px}
+input[type=text],input[type=date]{width:100%;font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+input:focus{outline:2px solid var(--accent-l);outline-offset:1px;border-color:var(--accent-l)}
+
+.bigstart{font:inherit;border:0;background:var(--accent);color:#fff;font-weight:700;font-size:16px;padding:14px 26px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.bigstart:hover{background:var(--accent-d)}
+.bigstart svg{width:18px;height:18px}
+
+/* session synthesis */
+.synth{display:flex;flex-direction:column;gap:9px}
+.srow{display:grid;grid-template-columns:13px 1fr auto auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:#fff;cursor:pointer}
+.srow:hover{border-color:var(--accent-l)}
+.srow .sd{width:13px;height:13px;border-radius:50%;background:var(--qc,#9aa)}
+.srow .snm{font-weight:700}
+.srow .sst{font-size:12.5px;color:#6a7188}
+.srow .ssc{font-weight:800;color:var(--accent-d);font-size:15px}
+.badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}
+.badge.todo{background:#eef0f2;color:#6a7188}
+.badge.doing{background:var(--tint);color:var(--accent-d)}
+.badge.done{background:var(--ok-soft);color:#2f6b4c}
+
+/* ===== Questionnaire head ===== */
+.qhead{margin:2px 0 12px}
+.qhead h2{margin:0;font-size:19px;color:var(--accent-d)}
+.qhead .sub{margin:2px 0 0;color:#6a7188;font-size:13px;font-weight:600}
+.insn{margin:10px 0 0;background:var(--tint);border:1px solid color-mix(in srgb,var(--accent) 30%,#fff);border-radius:10px;padding:10px 13px;color:var(--accent-ink);font-size:13.4px;line-height:1.5}
+
+/* ===== Likert grid ===== */
+.tblwrap{overflow:visible;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);margin-top:6px}
+.likert{width:100%;border-collapse:collapse;font-size:13px}
+.likert th{background:var(--accent);color:#fff;font-weight:700;padding:7px 5px;border:1px solid color-mix(in srgb,var(--accent) 60%,#fff);text-align:center;font-size:11px;line-height:1.15;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.likert th.h-item{text-align:left;min-width:210px}
+.likert thead th{position:sticky;top:var(--topbar-h);z-index:6;box-shadow:0 3px 4px -2px rgba(31,37,64,.22)}
+.likert thead th:first-child{border-top-left-radius:11px}
+.likert thead th:last-child{border-top-right-radius:11px}
+.likert td{border:1px solid #e6e7f0;vertical-align:middle}
+.likert td.itemnum{background:var(--tint);color:var(--accent-d);text-align:center;font-weight:700;width:30px;font-size:12px}
+.likert td.itemtxt{padding:6px 10px;line-height:1.3;color:#2a2f47}
+.likert td.likcell{text-align:center;width:54px;padding:3px}
+.likert tr.qrow:nth-child(odd) td.itemtxt,.likert tr.qrow:nth-child(odd) td.likcell{background:#fafafd}
+.cellradio{display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:26px;margin:0}
+.cellradio input{position:absolute;opacity:0;width:0;height:0}
+.tick{display:inline-block;width:19px;height:19px;border:1.7px solid var(--accent-l);border-radius:5px;background:#fff;box-sizing:border-box;position:relative;transition:.12s}
+.cellradio:hover .tick{border-color:var(--accent)}
+.cellradio input:checked+.tick{background:var(--accent);border-color:var(--accent-d)}
+.cellradio input:checked+.tick::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg);box-sizing:border-box}
+.likert td.cmtcell{width:34px;text-align:center;padding:2px}
+.cbtn{border:1px solid var(--line);background:#fff;color:#9aa0b4;width:28px;height:28px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.cbtn:hover{border-color:var(--accent-l);color:var(--accent)}
+.cbtn.has{background:var(--accent);border-color:var(--accent);color:#fff}
+.cbtn svg{width:15px;height:15px}
+.likert tr.qrow.miss td{background:#fdeee7!important}
+.likert tr.qrow.miss td.itemnum{background:#f4c9b4!important}
+.cmtrow td{padding:0;background:#fbfaf6}
+.cmtbox{padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+.cmtbox label{font-size:12px;color:#6a7188;font-weight:600}
+.cmtbox textarea{width:100%;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;resize:vertical;min-height:42px;background:#fff}
+.cmtbox textarea:focus{outline:2px solid var(--accent-l);outline-offset:1px;border-color:var(--accent-l)}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.actions .spacer{flex:1}
+.btn{font:inherit;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;padding:11px 22px;border-radius:10px;cursor:pointer}
+.btn:hover{background:var(--accent-d);border-color:var(--accent-d)}
+.btn.ghost{background:#fff;color:var(--accent-d);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent-l)}
+.btn.danger{background:#fff;border-color:var(--danger-line);color:var(--danger-ink)}
+.btn.danger:hover{background:var(--danger-soft)}
+
+.flash{background:var(--danger-soft);border:1px solid var(--danger-line);border-left:5px solid var(--danger);border-radius:10px;padding:11px 14px;margin:0 0 14px;color:var(--danger-ink);font-size:13.5px}
+
+/* ===== Results / cotation ===== */
+.hdr-id{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 22px;font-size:14.5px;margin-top:4px}
+@media(max-width:620px){.hdr-id{grid-template-columns:1fr}}
+.hdr-id .k{color:#6a7188}
+
+.qcard .tot{display:flex;align-items:baseline;gap:10px;margin:6px 0}
+.qcard .tot .big{font-size:38px;font-weight:800;letter-spacing:-.02em;color:var(--accent-d)}
+.qcard .tot .max{color:#6a7188;font-size:16px}
+.band{border-radius:10px;padding:11px 15px;font-weight:700;margin:2px 0 10px;font-size:14.5px;border:1px solid}
+.band.b0{background:var(--ok-soft);color:#2f6b4c;border-color:#c4e4d2}
+.band.b1{background:var(--soft);color:var(--accent-d);border-color:color-mix(in srgb,var(--accent) 30%,#fff)}
+.band.b2{background:var(--tint);color:var(--accent-d);border-color:color-mix(in srgb,var(--accent) 38%,#fff)}
+.band.b3{background:#f7e2d3;color:#8a4a26;border-color:#eccbb3}
+.nrbox{background:var(--danger-soft);border:1px solid var(--danger-line);color:var(--danger-ink);border-radius:10px;padding:9px 13px;font-size:13.5px;margin:0 0 10px}
+.cmbox{background:var(--tint);border:1px solid color-mix(in srgb,var(--accent) 30%,#fff);color:var(--accent-ink);border-radius:10px;padding:9px 13px;font-size:13.5px;margin:0 0 10px}
+
+.gauge{margin:8px 0 4px}
+.gauge .track{position:relative;height:13px;border-radius:99px;background:var(--soft);overflow:visible}
+.gauge .fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,var(--accent-l),var(--accent-d))}
+.gauge .mark{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--accent-d)}
+.gauge .mark::after{content:attr(data-l);position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--accent-d);white-space:nowrap}
+.gauge .ends{display:flex;justify-content:space-between;font-size:11px;color:#9aa0b4;margin-top:9px}
+
+.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0 4px}
+@media(max-width:620px){.sumgrid{grid-template-columns:1fr}}
+.sumcell{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff;position:relative;overflow:hidden}
+.sumcell::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--accent-l)}
+.sumcell.flag::before{background:var(--accent-d)}
+.sumcell .nm{font-size:12px;font-weight:800;color:var(--accent-l);text-transform:uppercase;letter-spacing:.04em;padding-left:6px}
+.sumcell.flag .nm{color:var(--accent-d)}
+.sumcell .v{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px;padding-left:6px;color:var(--accent-d)}
+.sumcell .v small{font-size:14px;color:#6a7188;font-weight:600}
+.pill{display:inline-block;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.pill.pos{background:var(--tint);color:var(--accent-d)}
+.pill.neg{background:var(--ok-soft);color:#2f6b4c}
+.minibar{margin:8px 6px 0;height:9px;border-radius:99px;background:var(--soft);position:relative;overflow:visible}
+.minibar .f{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,var(--accent-l),var(--accent-d))}
+.minibar .s{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--accent-d)}
+.minibar .s::after{content:"seuil";position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--accent-d)}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin:12px 0 6px;font-size:12.5px;color:#5b6178}
+.legend .lg{display:inline-flex;align-items:center;gap:7px}
+.legend .sw{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.06);flex:none}
+.ansrows{margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.arow{display:grid;grid-template-columns:34px 1fr 150px 46px;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:11px;background:#fff;border-left-width:4px;border-left-color:var(--accent-l)}
+.arow.rev{border-left-color:var(--accent-d);background:var(--soft)}
+.arow.nr{border-left-color:#d9d4cb;background:#fafafa}
+@media(max-width:640px){.arow{grid-template-columns:30px 1fr}.arow .ascale-wrap,.arow .apts{grid-column:2}.arow .apts{justify-self:start}}
+.arow .anum{font-weight:800;color:var(--accent-d);text-align:center;font-size:13.5px}
+.arow.nr .anum{color:#9aa09a}
+.arow .atext{font-size:13.4px;line-height:1.3;color:#2a2f47}
+.arow.nr .atext{color:#8f928f}
+.tagx{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.02em;padding:1px 7px;border-radius:20px;white-space:nowrap;margin-left:6px;vertical-align:middle;background:var(--tint);color:var(--accent-d)}
+.ascale{display:flex;flex-direction:column;gap:4px}
+.ascale .segs{display:flex;gap:3px}
+.ascale .seg{flex:1;height:9px;border-radius:3px;background:var(--soft)}
+.arow .seg.sel{background:var(--accent)}
+.arow.rev .seg.sel{background:var(--accent-d)}
+.ascale .lbl{font-size:11px;color:#5b6178;font-weight:600}
+.ascale.nrlbl .lbl{color:var(--danger);font-weight:700}
+.apts{justify-self:center;min-width:38px;text-align:center;font-weight:800;font-size:13px;border-radius:8px;padding:4px 0;background:var(--soft);color:var(--accent-d)}
+.apts.p0{background:#eef0ee;color:#9aa09a}
+.acom{grid-column:2/-1;font-size:12.5px;color:var(--accent-ink);background:var(--tint);border-radius:8px;padding:6px 10px;font-style:italic}
+.arow.add{border-left-color:var(--accent-l);background:#fbfafd}
+.arow.add .anum{color:var(--accent-l)}
+
+/* ===== Layout "blocs" (Y-BOCS) ===== */
+.card.consignes{padding:18px clamp(16px,3vw,24px)}
+.card.consignes h2{font-size:17px;margin-bottom:8px}
+.card.consignes p{margin:0 0 9px;color:#42475e;font-size:13.6px;line-height:1.55}
+.card.consignes ul{margin:4px 0 10px;padding-left:18px}
+.card.consignes li{margin:4px 0;color:#42475e;font-size:13.4px;line-height:1.5}
+.card.consignes .cnote{background:var(--tint);border:1px solid color-mix(in srgb,var(--accent) 28%,#fff);border-radius:10px;padding:9px 12px;color:var(--accent-ink);font-size:13px}
+.card.consignes strong{color:var(--accent-d)}
+.qsection{margin:24px 4px 10px}
+.qsection h3{margin:0;font-size:15px;color:var(--accent-d);font-weight:800}
+.qsection .snote{margin:3px 0 0;color:#6a7188;font-size:12.5px}
+.qitem{border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow);padding:14px 16px;margin:0 0 12px}
+.qitem.miss{border-color:var(--danger-line);background:var(--danger-soft)}
+.qitem-head{display:flex;align-items:flex-start;gap:10px}
+.qitem .qnum{flex:none;width:26px;height:26px;border-radius:8px;background:var(--tint);color:var(--accent-d);font-weight:800;font-size:13px;display:grid;place-items:center}
+.qitem .qtitle{flex:1;min-width:0;padding-top:2px}
+.qitem .qname{font-weight:700;color:#2a2f47;font-size:14.5px}
+.qitem .qrange{font-size:11.5px;color:#9aa0b4;font-weight:700;margin-left:7px;white-space:nowrap}
+.qitem-head .cbtn{flex:none;margin-top:1px}
+.qprompt{margin:10px 0 2px;background:var(--soft);border-left:3px solid var(--accent-l);border-radius:8px;padding:8px 11px;color:var(--accent-ink);font-size:13px;font-style:italic;line-height:1.45}
+.optlist{display:flex;flex-direction:column;gap:6px;margin-top:11px}
+.opt{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;background:#fff}
+.opt:hover{border-color:var(--accent-l);background:var(--soft)}
+.opt input{position:absolute;opacity:0;width:0;height:0}
+.opt .optmark{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--accent-l);margin-top:3px;position:relative;background:#fff;transition:.12s}
+.opt input:checked+.optmark{border-color:var(--accent-d)}
+.opt input:checked+.optmark::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+.opt:has(input:checked){border-color:var(--accent);background:var(--tint);box-shadow:0 1px 2px rgba(31,37,64,.06)}
+.opt .obody{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0}
+.opt .oscore{flex:none;font-weight:800;color:var(--accent-d);font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:7px;min-width:24px;height:24px;display:grid;place-items:center}
+.opt:has(input:checked) .oscore{background:var(--accent);color:#fff;border-color:var(--accent-d)}
+.opt .otext{display:flex;flex-direction:column;gap:1px;min-width:0}
+.opt .olabel{font-weight:700;color:#2a2f47;font-size:13.5px}
+.opt .odesc{color:#5b6178;font-size:12.4px;line-height:1.42}
+.qitem .cmtbox{margin-top:10px;border:1px dashed var(--line);border-radius:9px}
+
+/* ===== Annexes : check-list & symptômes-cibles ===== */
+.chk-sec{margin-top:12px}
+.chk-sec-h{font-size:15px;font-weight:800;color:var(--accent-d);margin:14px 0 6px;padding-bottom:5px;border-bottom:2px solid var(--accent-l)}
+.chk-cat-h{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-l);margin:13px 0 5px}
+.chk-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:9px}
+.chk-row:hover{background:var(--soft)}
+.chk-row.cat{background:var(--tint);border:1px solid color-mix(in srgb,var(--accent) 22%,#fff);margin:9px 0;font-weight:700}
+.chk-row.cat .chk-lab{color:var(--accent-d)}
+.chk-lab{flex:1;min-width:0;font-size:13.6px;color:#2a2f47;line-height:1.4}
+.cks{flex:none;display:flex;align-items:center;gap:6px}
+.ck{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;color:#6a7188;cursor:pointer;white-space:nowrap}
+.ck:hover{border-color:var(--accent-l)}
+.ck.a.on{background:var(--accent);border-color:var(--accent-d);color:#fff}
+.ck.p.on{background:#8a8f9e;border-color:#6c7180;color:#fff}
+.chk-cmt{padding:2px 8px 8px 8px}
+.chk-cmt textarea{width:100%;border:1px dashed var(--line);border-radius:8px;padding:7px 9px;font:inherit;font-size:12.5px;resize:vertical;background:#fff}
+.cib-grp{margin-top:12px}
+.cib-h{font-size:13px;font-weight:800;color:var(--accent-d);margin-bottom:6px}
+.cib-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.cib-row label{flex:none;width:96px;font-size:12.5px;font-weight:700;color:#6a7188}
+.cib-row input,#cibEvit{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font:inherit;font-size:13.4px;background:#fff}
+#cibEvit{width:100%;resize:vertical}
+.cib-row input:focus,#cibEvit:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+
+/* ===== Récapitulatif annexes (cotation + PDF) ===== */
+.sx-h{font-size:13px;font-weight:800;color:var(--accent-d);margin:12px 0 6px}
+.sx-row{padding:6px 0;border-bottom:1px dashed var(--line)}
+.sx-l{font-size:13.4px;color:#2a2f47;line-height:1.4}
+.sx-cat{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--accent-l);margin-right:4px}
+.ap{display:inline-flex;gap:6px;margin-top:4px}
+.apa,.app{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;color:#fff}
+.apa{background:var(--accent)}
+.app{background:#8a8f9e}
+.sx-c{margin-top:4px;font-size:12.5px;color:var(--accent-ink);background:var(--tint);border-radius:8px;padding:5px 9px;font-style:italic}
+.cibul{margin:0 0 4px;padding-left:18px}
+.cibul li{font-size:13.2px;color:#2a2f47;margin:3px 0}
+.cibevit{font-size:13.2px;color:#2a2f47;background:var(--soft);border-radius:8px;padding:8px 11px;margin:2px 0 0}
+
+/* ===== Références (fin de PDF) ===== */
+.printrefs{margin-top:14px;border-top:1px solid var(--line);padding-top:8px}
+.refblock{margin-top:6px}
+.reftitle{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8a8f9e}
+.refsrc{font-size:9.5px;color:#7a7f8c;margin:3px 0 2px;line-height:1.4}
+.reflist{margin:2px 0 0;padding-left:16px}
+.reflist li{font-size:9px;color:#8a8f9e;line-height:1.35;margin:1px 0}
+
+/* ===== DIVA-5 ===== */
+.qitem.diva .qname{font-weight:600;font-size:14px;line-height:1.45;color:#2a2f47}
+.qitem.diva .qnum{width:auto;min-width:26px;padding:0 9px;white-space:nowrap}
+.exnote{margin:8px 0 0;font-size:12px;color:#6a7188;font-style:italic}
+.divacols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+.divacol{min-width:0}
+.divacol-h{font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--accent-d);margin-bottom:7px}
+.exlist{display:flex;flex-direction:column;gap:4px}
+.exrow{display:flex;align-items:flex-start;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px 10px;background:#fff;cursor:pointer;text-align:left;width:100%;font:inherit}
+.exrow:hover{border-color:var(--accent-l);background:var(--soft)}
+.exrow .exck{flex:none;width:16px;height:16px;border-radius:5px;border:2px solid var(--accent-l);margin-top:1px;position:relative;background:#fff}
+.exrow.on{border-color:var(--accent);background:var(--tint)}
+.exrow.on .exck{background:var(--accent);border-color:var(--accent-d)}
+.exrow.on .exck::after{content:"";position:absolute;left:3px;top:0px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.exrow .exlb{font-size:13px;color:#2a2f47;line-height:1.4}
+.exother{display:flex;align-items:center;gap:8px;margin-top:7px}
+.exother label{flex:none;font-size:12px;font-weight:700;color:#6a7188}
+.exother input{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font:inherit;font-size:12.5px}
+.ynrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:13px;font-weight:700;color:#2a2f47}
+.ynrow span{flex:1;min-width:160px}
+.yn{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
+.yn.wide{border-radius:12px}
+.ynb{border:none;background:#fff;padding:7px 16px;font:inherit;font-size:13px;font-weight:700;color:#6a7188;cursor:pointer}
+.ynb+.ynb{border-left:1px solid var(--line)}
+.ynb.oui.on{background:var(--accent);color:#fff}
+.ynb.non.on{background:#8a8f9e;color:#fff}
+.yn.wide .ynb.on{background:var(--accent);color:#fff}
+.cdom{margin-top:12px}
+.cdom-h{font-size:13px;font-weight:800;color:var(--accent-d);margin-bottom:6px}
+.divasel{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;font-size:13.5px;background:#fff}
+.cbx{display:flex;align-items:center;gap:8px;font-size:13px;color:#2a2f47;cursor:pointer}
+.cbx input{width:16px;height:16px}
+/* tableau cotation DIVA */
+.dtable{width:100%;border-collapse:collapse;font-size:12.5px}
+.dtable th{background:var(--accent);color:#fff;font-weight:700;padding:7px 9px;text-align:left;font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.dtable th:last-child,.dtable th:nth-child(3){text-align:center}
+.dtable td{border-bottom:1px solid var(--line);padding:6px 9px;vertical-align:top}
+.dcrit{font-weight:800;color:var(--accent-d);white-space:nowrap;width:54px}
+.dstmt{color:#2a2f47;line-height:1.4}
+.dyn{text-align:center;white-space:nowrap;width:84px}
+.dtable tr.dsum td{background:var(--tint);font-weight:800;color:var(--accent-d);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.ynno{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;color:#fff;background:#8a8f9e;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media(max-width:760px){ .divacols{grid-template-columns:1fr} }
+/* transcription complète (PDF Toute la DIVA) */
+.fullcols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+.fullcol{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+.fullh{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--accent-d);margin-bottom:4px}
+.exsum{font-size:12px;color:#3a3f57;margin-top:5px;line-height:1.45}
+@media(max-width:760px){ .fullcols{grid-template-columns:1fr} }
+
+details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;color:var(--accent-d);font-weight:700;font-size:14px}
+.interp{white-space:pre-wrap;font-size:13.8px;color:#42475e;margin-top:10px;line-height:1.55}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(31,37,64,.42);display:none;place-items:center;z-index:90;padding:20px}
+.modal.show{display:grid}
+.modalbox{background:#fff;border-radius:14px;max-width:470px;width:100%;padding:24px;box-shadow:var(--shadow)}
+.modalbox h2{margin:0 0 8px;font-size:18px;color:var(--accent-d)}
+.modalbox p{margin:0 0 18px;color:var(--ink);line-height:1.5}
+.modalbox .mf{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:95;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== PRINT (PDF) ===== */
+@media print{
+  @page{size:A4;margin:11mm 12mm 12mm}
+  .topbar,.sidebar,.no-print,.scrim{display:none!important}
+  body{background:#fff;font-size:10px}
+  .layout{display:block}
+  main{padding:0;max-width:none;margin:0}
+
+  /* un questionnaire par groupe de pages, mais contenu libre de couler */
+  .printq{break-after:page;page-break-after:always}
+  .printq:last-child{break-after:auto;page-break-after:auto}
+
+  /* cartes compactes ; les grandes cartes peuvent se répartir sur plusieurs pages */
+  .card{box-shadow:none;border-color:#d6d6d6;padding:9px 12px;margin:0 0 7px;break-inside:auto;page-break-inside:auto}
+  .card h2{font-size:12px;margin-bottom:5px;break-after:avoid;page-break-after:avoid}
+  .qcard{break-inside:avoid;page-break-inside:avoid}
+
+  /* mastheads resserrés */
+  .masthead{margin:0 0 7px}
+  .masthead h1{font-size:16px}
+  .masthead.small h1{font-size:15px}
+  .masthead .kicker{font-size:9.5px;margin-bottom:3px}
+  .masthead .rule{margin:5px auto}
+  .masthead .lead{font-size:10.5px;margin-top:5px}
+  .hdr-id{font-size:10px;gap:3px 18px}
+
+  /* petites unités gardées d'un seul tenant */
+  .arow,.sumcell,.sx-row,.refblock,.cib-row,.nrbox,.cmbox,.fullcol,.qitem{break-inside:avoid;page-break-inside:avoid}
+  .fullcols{gap:10px}
+  .exsum{font-size:9px}
+  .fullh{font-size:9.5px}
+  .dtable thead{display:table-header-group}
+  .dtable tr,.dtable td{break-inside:avoid;page-break-inside:avoid}
+  .dtable{font-size:9px}
+  .dtable th,.dtable td{padding:4px 7px}
+  .sx-h,.chk-sec-h,.qsection h3{break-after:avoid;page-break-after:avoid}
+
+  /* details : on montre le contenu, on masque les chevrons */
+  details{border-top:none;padding-top:0;margin-top:7px}
+  details>summary{display:none}
+  details .interp,details .ansrows,details .legend{display:flex!important}
+  details .interp{display:block!important}
+
+  /* typographie d'impression resserrée (couleurs inchangées) */
+  .tot{margin:2px 0 6px}
+  .tot .big{font-size:32px}
+  .tot .max{font-size:13px}
+  .band{font-size:11px;padding:3px 12px}
+  .gauge{margin-top:8px}
+  .sumgrid{gap:8px;margin-top:10px}
+  .sumcell{padding:8px 10px}
+  .sumcell .v{font-size:17px}
+  .legend{font-size:9px;gap:10px}
+  .ansrows{gap:3px}
+  .arow{padding:3px 0;gap:8px}
+  .anum{font-size:10px}
+  .atext{font-size:10px}
+  .tagx{font-size:8.5px}
+  .ascale .lbl,.ascale-wrap .lbl{font-size:9px}
+  .apts{font-size:10.5px;min-width:20px;height:20px}
+  .acom{font-size:9.5px;padding:4px 8px}
+  .interp{font-size:9.5px;line-height:1.45}
+  .nrbox,.cmbox{font-size:9.5px;padding:7px 10px;margin-top:8px}
+  /* récapitulatif annexes */
+  .sx-h{font-size:11px;margin:8px 0 4px}
+  .sx-row{padding:4px 0}
+  .sx-l{font-size:10px}
+  .sx-cat{font-size:8.5px}
+  .apa,.app{font-size:8.5px;padding:1px 7px}
+  .sx-c{font-size:9px;padding:4px 8px}
+  .cibul li,.cibevit{font-size:10px}
+  .cibevit{padding:6px 9px}
+
+  .gauge .fill,.gauge .mark,.minibar .f,.minibar .s,.arow,.seg,.band,.pill,.apts,.sumcell::before,.likert th,.tagx,.note,.sb-link .dot,.opt,.oscore,.opt .optmark,.qnum,.qprompt,.apa,.app,.sx-cat,.chk-row.cat{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:980px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;max-height:none;background:var(--ivory);border-right:1px solid var(--line);z-index:85;transform:translateX(-100%);transition:transform .22s;padding-top:14px;box-shadow:0 0 40px rgba(0,0,0,.18)}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(31,37,64,.4);z-index:80}
+  .hamburger{display:inline-flex}
+  main{margin:0;max-width:none}
+  .patientchip{max-width:38vw}
+}
+@media(max-width:760px){
+  .tblwrap{overflow-x:auto}
+  .likert thead th{position:static;box-shadow:none}
+  .tools{width:100%;margin-left:0}
+  .seg{order:3}
+}
+@media(max-width:620px){.row2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<div class="topbar"><div class="inner">
+  <button class="hamburger" id="hamb" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+  <button class="brand" id="brandHome">Hétéro-questionnaires</button>
+  <button class="patientchip empty" id="patientChip"><span class="av" id="pAv">?</span><span class="who" id="pWho">Aucun patient</span><span class="dob" id="pDob"></span></button>
+  <div class="seg" id="seg" style="display:none"></div>
+  <div class="tools">
+    <button class="tbtn" id="btnSave"><span class="ic">&#128190;</span> Enregistrer<span class="caret">&#9660;</span></button>
+    <button class="tbtn" id="btnResume"><span class="ic">&#128193;</span> Reprendre</button>
+    <button class="tbtn primary" id="btnPdf"><span class="ic">&#128196;</span> Générer le PDF<span class="caret">&#9660;</span></button>
+    <div class="pop" id="popSave">
+      <button class="pitem" data-scope="q"><span class="t">Ce questionnaire (.json)</span><span class="s" id="saveQLab">—</span></button>
+      <div class="sep"></div>
+      <button class="pitem" data-scope="session"><span class="t">Toute la session (.json)</span><span class="s">Patient + tous les questionnaires</span></button>
+    </div>
+    <div class="pop" id="popPdf">
+      <button class="pitem" data-scope="q"><span class="t">Ce questionnaire</span><span class="s" id="pdfQLab">—</span></button>
+      <button class="pitem" id="pdfDivaFull" data-scope="divafull" style="display:none"><span class="t">Toute la DIVA</span><span class="s">Questionnaire complet + cotation</span></button>
+      <div class="sep"></div>
+      <button class="pitem" data-scope="session"><span class="t">Toute la session</span><span class="s">Tous les questionnaires entamés</span></button>
+    </div>
+  </div>
+</div></div>
+
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main id="app"></main>
+</div>
+<footer class="sitefoot no-print">Outils conçus par le D<sup>r</sup> Clémentine Doussy — à usage soignant, dans le cadre de consultations spécialisées.</footer>
+
+<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept="application/json,.json" style="display:none">
+
+<script>
+const RAADS = {"id": "RAADS", "title": "RAADS-R", "opts": ["Vrai maintenant et quand j'avais moins de 16 ans", "Vrai seulement maintenant", "Vrai seulement quand j'avais moins de 16 ans", "Jamais vrai"], "items": [{"n": 1, "text": "Je suis une personne compatissante", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 2, "text": "J'utilise souvent des mots et des phrases entendus dans des films ou à la télévision dans les conversations", "cat": "L", "scores": [3, 2, 1, 0]}, {"n": 3, "text": "Je suis souvent surpris lorsque les autres me disent que j'ai été impoli.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 4, "text": "Parfois, je parle trop fort ou trop doucement et je ne m'en aperçois pas.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 5, "text": "J'ai souvent des difficultés à savoir comment me comporter en société.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 6, "text": "Je peux \"me mettre dans la peau de quelqu'un d'autre\".", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 7, "text": "J'ai du mal à comprendre le sens de certaines phrases comme \"je tiens à toi comme à la prunelle de mes yeux\".", "cat": "L", "scores": [3, 2, 1, 0]}, {"n": 8, "text": "J'aime seulement parler aux gens qui partagent mes centres d'intérêt.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 9, "text": "Je fais plus attention aux détails qu'à l'idée générale.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 10, "text": "Je suis sensible à l'effet produit par un aliment dans ma bouche. Ceci est plus important que son goût.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 11, "text": "Mes meilleurs amis ou ma famille me manquent quand nous sommes séparés depuis longtemps.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 12, "text": "Quelquefois, je vexe les autres en disant ce que je pense, sans le faire exprès.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 13, "text": "J'aime seulement penser et parler des choses qui m'intéressent.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 14, "text": "Je préfère aller manger dans un restaurant tout seul plutôt qu'avec quelqu'un que je connais.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 15, "text": "Je n'arrive pas à imaginer comment ce serait d'être quelqu'un d'autre.", "cat": "L", "scores": [3, 2, 1, 0]}, {"n": 16, "text": "On m'a déjà dit que j'étais maladroit ou que je manquais de coordination.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 17, "text": "Les autres me trouvent étrange ou différent.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 18, "text": "Je comprends lorsque des amis ont besoin d'être réconfortés.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 19, "text": "Je suis très sensible au contact de mes vêtements lorsque je les touche. Leur texture est plus importante pour moi que leur look.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 20, "text": "J'aime copier la manière dont certaines personnes parlent et agissent. Cela m'aide à me sentir plus normal.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 21, "text": "Cela peut être très intimidant pour moi de parler à plus d'une personne en même temps.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 22, "text": "Je dois adopter un comportement \"normal\" pour plaire aux autres et pour qu'ils m'apprécient.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 23, "text": "Rencontrer de nouvelles personnes est habituellement facile pour moi.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 24, "text": "Je suis déstabilisé lorsque quelqu'un m'interrompt alors que je parle de quelque chose qui m'intéresse beaucoup.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 25, "text": "Il m'est difficile de percevoir les sentiments des autres lors d'une conversation.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 26, "text": "J'aime avoir une conversation avec plusieurs personnes, par exemple lors d'un dîner, à l'école ou au travail.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 27, "text": "Je prends les choses trop au premier degré, ainsi je passe à côté de ce que les gens essaient de me dire.", "cat": "L", "scores": [3, 2, 1, 0]}, {"n": 28, "text": "C'est très difficile pour moi de comprendre lorsque quelqu'un est gêné ou jaloux.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 29, "text": "Certaines textures ordinaires qui ne posent aucun problème aux autres sont pour moi insupportables lorsqu'elles sont au contact de ma peau.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 30, "text": "Je suis très contrarié lorsqu'on m'empêche de faire les choses à ma façon.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 31, "text": "Je n'ai jamais désiré ou eu besoin de ce que les autres personnes appellent une \"relation intime\".", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 32, "text": "C'est difficile pour moi de commencer et d'arrêter une conversation. J'ai besoin d'aller jusqu'au bout de mon propos.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 33, "text": "Je parle avec un rythme de voix normal.", "cat": "SM", "scores": [0, 1, 2, 3]}, {"n": 34, "text": "Je peux sans transition être très sensible ou pas du tout sensible au même son, à la même couleur ou à la même texture.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 35, "text": "La phrase \"je t'ai dans la peau\" me met mal à l'aise.", "cat": "L", "scores": [3, 2, 1, 0]}, {"n": 36, "text": "Quelquefois, la sonorité d'un mot ou un bruit aigu peut me faire mal aux oreilles.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 37, "text": "On me considère comme une personne très compréhensive.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 38, "text": "Je ne peux pas m'identifier à un personnage dans un film, et je ne peux pas ressentir ce qu'il ressent.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 39, "text": "Je ne peux pas dire si quelqu'un est en train de me draguer.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 40, "text": "Je peux me représenter avec précisions les détails qui m'intéressent.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 41, "text": "Je fais des listes de choses qui m'intéressent, même si elles n'ont pas d'utilité pratique (par exemple statistiques sportives, horaires de train, dates du calendrier, faits historiques, etc.)", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 42, "text": "Quand je me sens dépassé par des stimulations sensorielles, je dois m'isoler pour y échapper.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 43, "text": "J'aime parler de choses et d'autres avec mes amis.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 44, "text": "Je ne peux pas dire si quelqu'un est intéressé ou ennuyé par ce que je dis.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 45, "text": "Lorsque quelqu'un est en train de parler, il peut m'être très difficile de lire sur son visage, de comprendre les mouvements de ses mains ou de son corps.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 46, "text": "Je peux ressentir à différents moments la même chose très différemment (comme des vêtements ou la température).", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 47, "text": "Je me sens très à l'aise lors d'un rendez-vous amoureux ou lorsque je me trouve en société.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 48, "text": "J'essaie d'être aussi aidant que possible lorsque les autres me parlent de leurs problèmes personnels.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 49, "text": "On m'a dit que j'avais une voix particulière (par exemple plate, monotone, enfantine ou aigüe)", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 50, "text": "Quelquefois une idée ou un sujet reste bloqué dans mon esprit et je dois en parler, même si cela n'intéresse personne.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 51, "text": "Je fais certaines choses avec mes mains de façon répétée (comme un battement d'ailes, faire tournoyer un bâton ou une ficelle, agiter des choses devant mes yeux).", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 52, "text": "Je n'ai jamais été intéressé par ce que la plupart des gens que je connais considèrent comme intéressant.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 53, "text": "On me considère comme une personne compatissante.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 54, "text": "Pour m'entendre avec les autres, je suis un ensemble de règles spécifiques qui m'aident à paraître normal.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 55, "text": "C'est très difficile pour moi de travailler et d'évoluer dans un groupe.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 56, "text": "Lorsque je parle à quelqu'un, il m'est difficile de changer de sujet. Si l'autre personne le fait, je peux être bouleversé et confus.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 57, "text": "Quelquefois, je dois couvrir mes oreilles pour arrêter les bruits douloureux (comme un aspirateur ou des gens qui parlent trop ou trop fort).", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 58, "text": "Je peux discuter et avoir des conversations superficielles.", "cat": "L", "scores": [0, 1, 2, 3]}, {"n": 59, "text": "Quelquefois, des choses qui devraient être douloureuses ne me font pas mal (par exemple, lorsque je me blesse ou lorsque je me brûle la main sur un poêle).", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 60, "text": "Quand je parle à quelqu'un, j'ai des difficultés à savoir si c'est mon tour de parler ou d'écouter.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 61, "text": "Je suis considéré comme un solitaire par ceux qui me connaissent le mieux.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 62, "text": "Je parle habituellement avec un ton de voix normal.", "cat": "SM", "scores": [0, 1, 2, 3]}, {"n": 63, "text": "J'aime que les choses se déroulent toujours de la même manière, jour après jour, et même les petits changements dans mes routines me perturbent.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 64, "text": "Comment se faire des amis et s'intégrer socialement est un mystère pour moi.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 65, "text": "Cela me calme de tourner en rond ou de me balancer sur une chaise lorsque je me sens stressé.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 66, "text": "La phrase \" il a le cœur sur la main\" n'a pas de sens pour moi.", "cat": "L", "scores": [3, 2, 1, 0]}, {"n": 67, "text": "Si je suis dans un endroit où il y a beaucoup d'odeurs, de matières à toucher, de bruits ou de lumières intenses, je me sens anxieux ou effrayé.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 68, "text": "Je sais faire la différence lorsque quelqu'un dit une chose mais veut en dire une autre.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 69, "text": "J'aime être seul autant que possible.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 70, "text": "Je garde mes pensées empilées dans ma mémoire comme dans un classeur et je prends celles dont j'ai besoin en sélectionnant dans la pile (ou avec une méthode similaire).", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 71, "text": "Le même son peut paraître quelquefois très fort ou très doux alors que je sais qu'il n'a pas changé.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 72, "text": "J'aime passer du temps à manger et parler avec ma famille et mes amis.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 73, "text": "Je ne supporte pas les choses que je n'aime pas (comme des odeurs, des matières, des sons ou des couleurs).", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 74, "text": "Je n'aime pas être tenu ou étreint.", "cat": "SM", "scores": [3, 2, 1, 0]}, {"n": 75, "text": "Lorsque je vais quelque part, je dois suivre un parcours familier sinon je peux devenir très confus et perturbé.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 76, "text": "C'est difficile de comprendre ce que les autres personnes attendent de moi.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 77, "text": "J'aime avoir des amis proches.", "cat": "IS", "scores": [0, 1, 2, 3]}, {"n": 78, "text": "On me dit que je donne trop de détails.", "cat": "IR", "scores": [3, 2, 1, 0]}, {"n": 79, "text": "On me dit souvent que je pose des questions embarrassantes.", "cat": "IS", "scores": [3, 2, 1, 0]}, {"n": 80, "text": "J'ai tendance à souligner les erreurs des autres.", "cat": "IS", "scores": [3, 2, 1, 0]}]};
+const RAADS_INTERP = {"totalMax": 240, "bands": [[0, 24, "Pas de TSA"], [25, 49, "Certains traits autistiques, mais probablement pas de TSA"], [50, 64, "Score limite : à surveiller"], [65, 89, "Score minimum auquel l'autisme est considéré"], [90, 129, "Forte présomption de TSA"], [130, 159, "Preuve solide de TSA (score moyen des personnes autistes)"], [160, 226, "Preuve très solide de TSA"], [227, 239, "Partition maximale des personnes atteintes de TSA (article fondateur de Ritvo)"], [240, 240, "Score RAADS-R maximum possible"]], "subscales": {"L": ["Langage", 4, 21], "IS": ["Interactions sociales", 31, 117], "SM": ["Symptômes sensorimoteurs", 16, 60], "IR": ["Intérêts restreints", 15, 42]}, "details": "Tous les scores de 65 ou plus sont indicatifs de traits autistiques. Plus le score est élevé, plus la personne présente de traits autistiques.\n\nRepères de score total :\n25 — Pas de TSA\n50 — Certains traits autistiques, mais probablement pas de TSA\n65 — Score minimum auquel l'autisme est considéré\n90 — Forte présomption de TSA\n130 — Preuve solide de TSA (score moyen des personnes autistes)\n160 — Preuve très solide de TSA\n227 — Partition maximale des personnes atteintes de TSA dans l'article fondateur de Ritvo\n240 — Score RAADS-R maximum possible"};
+
+/* ============================================================
+   REGISTRE DES QUESTIONNAIRES
+   Pour ajouter un questionnaire : pousser un objet ici.
+   ============================================================ */
+const REGISTRY = [
+  {
+    id:"RAADS",
+    category:"TSA",
+    title:"RAADS-R",
+    subtitle:"Ritvo Autism Asperger Diagnostic Scale – Revised",
+    lead:"À renseigner par le soignant, item par item, avec le patient.",
+    palette:{accent:"#3f51a8",accentD:"#2f3d85",accentL:"#6b79c4"},
+    opts: RAADS.opts,
+    items: RAADS.items,
+    instructions:"Pour chaque affirmation, cochez la réponse qui correspond le mieux au patient. Une seule réponse par item ; cliquez de nouveau pour décocher. L'icône à droite permet d'ajouter une note clinique facultative.",
+    scoring:{
+      totalMax: RAADS_INTERP.totalMax,
+      bands: RAADS_INTERP.bands,
+      marks:[65,90,130,160],
+      subscales: RAADS_INTERP.subscales,
+      subOrder:["IS","SM","IR","L"],
+      details: RAADS_INTERP.details,
+      note:"RAADS-R : un score total ≥ 65 oriente vers la présence de traits autistiques. Cet outil est une aide à la passation et au calcul ; il ne pose pas de diagnostic.",
+      reverseLabel:"Item inversé (cotation 0→3)"
+    }
+  },
+
+  {
+    id:"YBOCS",
+    category:"TOC",
+    title:"Y-BOCS",
+    subtitle:"Échelle d'obsession-compulsion de Yale-Brown — version française (Mollard, Cottraux & Bouvard, 1989)",
+    lead:"Coté par le soignant en entretien semi-structuré, sur la semaine écoulée.",
+    palette:{accent:"#7a4a8c",accentD:"#5e3870",accentL:"#a07fb8"},
+    layout:"blocks",
+    consignesHTML:"<h2>Consignes de passation</h2>"
+      +"<p>L'objectif est de mesurer la gravité et le type des symptômes d'obsession-compulsion. Entretien <strong>semi-structuré</strong> coté par le soignant : posez les items dans l'ordre imposé (des questions supplémentaires sont possibles pour clarifier). En règle générale, cotez selon ce que rapporte le patient, mais c'est le <strong>jugement clinique</strong> de l'évaluateur qui détermine le score final. Évaluez chaque item sur la <strong>semaine écoulée</strong> (entretien inclus) ; les scores doivent refléter la survenue moyenne de chaque item sur la semaine.</p>"
+      +"<p><strong>À lire au patient avant de commencer :</strong></p>"
+      +"<ul>"
+      +"<li><strong>Obsessions</strong> : idées, pensées, images ou désirs impulsifs pénibles qui vous viennent à l'esprit d'une manière répétitive. Elles peuvent vous sembler apparaître contre votre volonté, vous paraître répugnantes, dénuées de sens, ou ne pas correspondre du tout à votre personnalité. Elles sont souvent source d'angoisse.</li>"
+      +"<li><strong>Compulsions</strong> : comportements ou actes que vous vous sentez obligé d'accomplir, même en les reconnaissant dénués de sens ou excessifs. Vous essayez parfois d'y résister, mais c'est difficile. Vous pouvez ressentir une anxiété qui ne diminue pas tant que l'acte n'est pas accompli.</li>"
+      +"</ul>"
+      +"<p>Avant de coter, établissez avec le patient la <strong>liste des symptômes</strong> (Annexe 1) et les <strong>symptômes-cibles</strong> (Annexe 2) — utilisez pour cela l'onglet <strong>Annexes</strong> ci-dessus. Le score final de chaque item devra refléter l'ensemble des obsessions et compulsions du patient.</p>"
+      +"<p class='cnote'><strong>Cotation.</strong> Les <strong>19 items sont cotés</strong>, mais seuls les <strong>items 1 à 10</strong> déterminent le score total Y-BOCS (0–40) = sous-total obsessions (items 1–5) + sous-total compulsions (items 6–10). Les <strong>items 11 à 19</strong> sont additionnels (heuristiques) et <strong>ne sont pas inclus</strong> dans le score total. En cas d'évaluations répétées, revoyez les obsessions cibles avant de coter l'item 1, et les compulsions cibles avant de coter l'item 6.</p>",
+    groups:{
+      OBS:{label:"Obsessions — items 1 à 5", note:"Sous-total obsessions = somme des items 1 à 5 (0–20)."},
+      COMP:{label:"Compulsions — items 6 à 10", note:"Sous-total compulsions = somme des items 6 à 10 (0–20)."},
+      ADD:{label:"Items additionnels — items 11 à 19", note:"Items complémentaires (heuristiques) : non inclus dans le score total Y-BOCS (items 1 à 10)."}
+    },
+    items:[
+      {n:1, grp:"OBS", cat:"OBS", text:"Durée des pensées obsédantes",
+       q:"Combien de temps durent les pensées obsédantes ? Lorsque les obsessions surviennent d'une manière intrusive, brève et intermittente, il est parfois impossible d'évaluer leur durée en termes d'heures : estimez alors la durée en fonction de la fréquence de leur survenue. Prenez en considération aussi bien la fréquence de la survenue de la pensée que le nombre d'heures dans la journée affectées par cette pensée. Demandez : « Combien de fois la pensée obsédante arrive-t-elle ? » Assurez-vous d'exclure les ruminations et les préoccupations qui, contrairement aux obsessions, sont égo-syntoniques et rationnelles (mais exagérées).",
+       opts:[
+         {label:"Nulle", score:0},
+         {label:"Légère", desc:"Moins d'1 h par jour, ou survenue occasionnelle (pas plus de 8 fois par jour).", score:1},
+         {label:"Moyenne", desc:"1 à 3 h par jour, ou survenue fréquente (plus de 8 fois par jour, mais la journée se passe la plus grande partie du temps sans).", score:2},
+         {label:"Importante", desc:"Plus de 3 h par jour, jusqu'à 8 h par jour, ou survenue très fréquente (plus de 8 fois par jour et occupant une très grande partie de la journée).", score:3},
+         {label:"Extrêmement importante", desc:"Supérieure à 8 h par jour, ou envahissement pratiquement constant ; pensées tellement nombreuses qu'on ne peut les compter, et il est très rare de passer 1 h dans la journée sans que plusieurs pensées ne surviennent.", score:4}
+       ]},
+      {n:2, grp:"OBS", cat:"OBS", text:"Gêne liée aux pensées obsédantes",
+       q:"Dans quelle mesure vos pensées obsédantes vous gênent-elles dans votre vie sociale ou professionnelle ? Y a-t-il des choses qu'il vous est impossible de faire à cause des pensées obsédantes ? (Si actuellement le patient ne travaille pas, essayez d'évaluer de combien sa performance serait amoindrie s'il travaillait.)",
+       opts:[
+         {label:"Nulle", score:0},
+         {label:"Légère", desc:"Faible gêne dans les activités sociales ou professionnelles, mais l'efficacité globale du patient n'est pas altérée.", score:1},
+         {label:"Moyenne", desc:"Nette gêne dans les activités sociales ou professionnelles, mais le patient peut encore faire face.", score:2},
+         {label:"Importante", desc:"Cause une altération réelle des activités sociales et professionnelles du patient.", score:3},
+         {label:"Extrêmement importante", desc:"Gêne invalidante.", score:4}
+       ]},
+      {n:3, grp:"OBS", cat:"OBS", text:"Angoisse associée aux pensées obsédantes",
+       q:"Quel niveau d'angoisse ces pensées obsédantes créent-elles en vous ? (Dans la plupart des cas, l'angoisse est synonyme d'anxiété. Cependant, des patients peuvent trouver leurs obsessions « gênantes » mais dénier « l'anxiété ». Ne cotez ici que l'anxiété qui semble déclenchée par les obsessions, non l'anxiété généralisée ou liée à d'autres symptômes.)",
+       opts:[
+         {label:"Nulle", score:0},
+         {label:"Légère", desc:"Rare et très peu gênante.", score:1},
+         {label:"Moyenne", desc:"Fréquente et gênante, mais que le patient gère encore assez bien.", score:2},
+         {label:"Importante", desc:"Très fréquente et très gênante.", score:3},
+         {label:"Extrêmement importante", desc:"Pratiquement constante et d'une gêne invalidante.", score:4}
+       ]},
+      {n:4, grp:"OBS", cat:"OBS", text:"Résistance aux pensées obsédantes",
+       q:"Quel effort fournissez-vous pour résister aux pensées obsédantes ? Essayez-vous souvent de détourner votre attention de ces pensées quand elles vous viennent à l'esprit ? N'évaluez ici que l'effort fourni pour résister, pas le succès ou l'échec dans le contrôle effectif des obsessions. L'effort pour résister peut ne pas correspondre à la capacité à contrôler. Cet item mesure la manifestation de quelque chose de sain : l'effort fourni pour contrecarrer les obsessions. Ainsi, plus le patient essaie de résister, moins cet aspect paraît altéré. Si les obsessions sont très réduites, le patient peut ne pas éprouver le besoin d'y résister : on donnera alors la cote « 0 ».",
+       opts:[
+         {label:"Résiste toujours", desc:"Fait l'effort de toujours résister, ou symptômes si minimes qu'ils ne nécessitent pas qu'on leur résiste.", score:0},
+         {label:"Résiste la plupart du temps", desc:"Essaie de résister la plupart du temps.", score:1},
+         {label:"Résiste un peu", desc:"Fait quelque effort pour résister.", score:2},
+         {label:"Cède avec réticence", desc:"Cède à toutes les obsessions sans essayer de les contrôler, mais est quelque peu contrarié de ne pouvoir mieux faire.", score:3},
+         {label:"Cède totalement", desc:"Cède volontiers et totalement à toutes les obsessions.", score:4}
+       ]},
+      {n:5, grp:"OBS", cat:"OBS", text:"Degré de contrôle sur les pensées obsédantes",
+       q:"Quel contrôle exercez-vous sur vos pensées obsédantes ? Dans quelle mesure arrivez-vous à stopper ou à détourner vos pensées obsédantes ? (Contrairement à l'item précédent sur la résistance, la capacité du patient à contrôler ses obsessions est plus directement reliée à l'importance des pensées qui surviennent.)",
+       opts:[
+         {label:"Contrôle total", score:0},
+         {label:"Beaucoup de contrôle", desc:"Généralement capable de stopper ou de détourner les obsessions avec quelques efforts et de la concentration.", score:1},
+         {label:"Contrôle moyen", desc:"Peut de temps en temps arriver à stopper ou à détourner ses obsessions.", score:2},
+         {label:"Peu de contrôle", desc:"Arrive rarement à stopper ses obsessions, peut seulement détourner son attention avec difficulté.", score:3},
+         {label:"Pas de contrôle", desc:"Semble totalement dépourvu de volonté, rarement capable de détourner son attention de ses obsessions, même momentanément.", score:4}
+       ]},
+
+      {n:6, grp:"COMP", cat:"COMP", text:"Durée des rituels",
+       q:"Combien de temps passez-vous à faire des rituels ? Lorsque ce sont des rituels incluant des activités de la vie de tous les jours, demandez : combien de temps vous faut-il de plus qu'à la majorité des gens pour accomplir les activités quotidiennes, du fait de vos rituels ? Lorsque les compulsions sont des comportements brefs et intermittents, estimez la durée en déterminant la fréquence de leur émission. Considérez aussi bien le nombre de fois où les compulsions sont émises que le nombre d'heures par jour parasitées. Notez le nombre de fois où le comportement compulsif apparaît, et non les répétitions (ex. : aller 20 fois dans la salle de bain pour se laver les mains 5 fois de suite = 20 rituels, pas 5 ni 100).",
+       opts:[
+         {label:"Nulle", score:0},
+         {label:"Légère", desc:"Passe moins d'1 h à faire des rituels, ou émission occasionnelle de conduites ritualisées (pas plus de 8 fois par jour).", score:1},
+         {label:"Moyenne", desc:"Passe de 1 h à 3 h par jour à faire des rituels, ou apparition fréquente des conduites ritualisées (plus de 8 fois par jour, mais le temps n'est pas, en majorité, envahi par les compulsions).", score:2},
+         {label:"Importante", desc:"Passe plus de 3 h et jusqu'à 8 h par jour, ou apparition très fréquente des conduites ritualisées (plus de 8 fois par jour ; la plupart du temps est pris par les compulsions).", score:3},
+         {label:"Extrêmement importante", desc:"Passe plus de 8 h par jour, ou présence pratiquement constante de conduites ritualisées (trop importantes pour être dénombrées ; une heure se passe rarement sans qu'apparaissent plusieurs compulsions).", score:4}
+       ]},
+      {n:7, grp:"COMP", cat:"COMP", text:"Gêne liée aux rituels",
+       q:"Dans quelle mesure les rituels vous gênent-ils dans votre vie sociale ou professionnelle ? Y a-t-il des choses qu'il vous est impossible de faire à cause de vos rituels ? (Si actuellement le patient ne travaille pas, essayez d'évaluer de combien sa performance serait amoindrie s'il tenait son emploi.)",
+       opts:[
+         {label:"Nulle", score:0},
+         {label:"Légère", desc:"Faible gêne dans les activités sociales ou professionnelles, mais l'efficacité globale du patient n'est pas altérée.", score:1},
+         {label:"Moyenne", desc:"Nette gêne dans les activités sociales ou professionnelles, mais le patient peut faire face.", score:2},
+         {label:"Importante", desc:"Cause une altération réelle des activités sociales ou professionnelles du patient.", score:3},
+         {label:"Extrêmement importante", desc:"Gêne invalidante.", score:4}
+       ]},
+      {n:8, grp:"COMP", cat:"COMP", text:"Angoisse associée aux rituels",
+       q:"Comment vous sentiriez-vous si l'on vous empêchait de faire votre (vos) rituel(s) ? (pause) Seriez-vous très anxieux ? Évaluez le degré d'angoisse si l'exécution du rituel était soudainement interrompue, sans réassurance en contrepartie. Dans la plupart des cas (mais pas tous), ritualiser réduit l'anxiété. Si, d'après le jugement de l'évaluateur, l'anxiété est effectivement réduite quand on empêche le rituel, demandez : « Donnez-nous un indice de votre anxiété pendant que vous faites les rituels, jusqu'au moment où, satisfait, vous cessez. »",
+       opts:[
+         {label:"Nulle", score:0},
+         {label:"Légère", desc:"Seulement légèrement anxieux si on l'empêche de ritualiser, ou seulement une légère anxiété pendant l'accomplissement des rituels.", score:1},
+         {label:"Moyenne", desc:"L'angoisse monterait mais resterait contrôlable si on l'empêchait de ritualiser, ou l'anxiété augmente mais reste contrôlée pendant qu'il accomplit ses rituels.", score:2},
+         {label:"Importante", desc:"Augmentation très nette et très éprouvante de l'anxiété si les rituels sont interrompus, ou pendant leur accomplissement.", score:3},
+         {label:"Extrêmement importante", desc:"Anxiété invalidante dès qu'une intervention vise à modifier l'activité ritualisée, ou anxiété invalidante pendant l'accomplissement des rituels.", score:4}
+       ]},
+      {n:9, grp:"COMP", cat:"COMP", text:"Résistance aux compulsions",
+       q:"Quel effort fournissez-vous pour résister aux compulsions ? N'évaluez ici que l'effort fourni pour résister, pas le succès ou l'échec dans le contrôle effectif des rituels. L'effort pour résister peut ou non correspondre à la capacité à contrôler. Cet item n'est pas une mesure directe de la gravité des rituels : il évalue la manifestation de quelque chose de sain, l'effort fourni pour contrecarrer les rituels. Ainsi, plus le patient essaie de résister, moins cet aspect paraît altéré. Si les rituels sont très réduits, le patient peut très bien ne pas éprouver le besoin d'y résister : on donnera alors la cote 0.",
+       opts:[
+         {label:"Résiste toujours", desc:"Fait l'effort de toujours résister, ou symptômes si minimes qu'ils ne nécessitent pas qu'on leur résiste.", score:0},
+         {label:"Résiste la plupart du temps", desc:"Essaie de résister la plupart du temps.", score:1},
+         {label:"Résiste un peu", desc:"Fait quelques efforts pour résister.", score:2},
+         {label:"Cède avec réticence", desc:"Cède à tous les rituels sans essayer de les contrôler, mais est quelque peu contrarié de ne pouvoir mieux faire.", score:3},
+         {label:"Cède totalement", desc:"Cède volontiers et totalement à tous les rituels.", score:4}
+       ]},
+      {n:10, grp:"COMP", cat:"COMP", text:"Degré de contrôle sur les rituels",
+       q:"Quelle est l'intensité de la pulsion qui vous oblige à ritualiser ? (pause) Quel contrôle pouvez-vous exercer sur les rituels ? (Contrairement à l'item précédent sur la résistance, la capacité du patient à contrôler ses compulsions est plus directement reliée à l'importance des compulsions.)",
+       opts:[
+         {label:"Contrôle total", score:0},
+         {label:"Beaucoup de contrôle", desc:"Ressent une certaine obligation à accomplir les rituels, mais peut généralement exercer un contrôle volontaire sur cette pression.", score:1},
+         {label:"Contrôle moyen", desc:"Forte obligation à accomplir les rituels, peut le contrôler mais avec difficulté.", score:2},
+         {label:"Peu de contrôle", desc:"Très forte obligation à accomplir des rituels ; doit aller jusqu'au bout de l'activité ritualisée, ne peut différer qu'avec difficulté.", score:3},
+         {label:"Aucun contrôle", desc:"L'obligation est vécue comme complètement involontaire et irrésistible ; ne peut que rarement différer, même momentanément, l'activité.", score:4}
+       ]},
+
+      {n:11, grp:"ADD", core:false, text:"Capacité à s'interroger sur les obsessions et les compulsions",
+       q:"Pensez-vous que vos pensées ou comportements sont raisonnables ? (pause) Que pensez-vous qu'il arriverait si vous n'accomplissiez pas vos rituels ? Êtes-vous persuadé que quelque chose arriverait ? (Évaluez la capacité du patient à percevoir l'aspect excessif ou absurde de ses obsessions, fondée sur les croyances exprimées au moment de l'entretien.)",
+       opts:[
+         {label:"Excellente", desc:"Excellente capacité de réflexion. Tout à fait rationnel.", score:0},
+         {label:"Bonne", desc:"Reconnaît très vite l'aspect absurde ou excessif de ses pensées ou comportements, mais ne semble pas totalement convaincu que seule l'anxiété y soit associée.", score:1},
+         {label:"Faible", desc:"A du mal à admettre que ses pensées ou comportements sont absurdes ou excessifs, mais peut douter. Peut avoir des pensées irréalistes, mais pas de convictions fermes.", score:2},
+         {label:"Pauvre", desc:"Maintient que les pensées ou comportements ne sont pas absurdes ni excessifs.", score:3},
+         {label:"Absente", desc:"Absence d'auto-critique, toute-puissance de la pensée. Absolument convaincu que ses pensées et comportements sont rationnels. Incapable d'entendre des arguments contradictoires.", score:4}
+       ]},
+      {n:12, grp:"ADD", core:false, text:"Évitement",
+       q:"Vous est-il arrivé d'éviter de faire certaines choses, d'aller quelque part, ou d'être avec quelqu'un, du fait de vos pensées obsédantes ou par peur d'émettre des rituels ? (Si oui, demandez l'importance de cet évitement.) Parfois, des compulsions ont pour effet d'« éviter » le contact avec des choses que le patient redoute : laver des vêtements est un rituel, mais refuser de s'occuper de la lessive serait une conduite d'évitement.",
+       opts:[
+         {label:"Pas d'évitement", desc:"Pas d'évitement délibéré.", score:0},
+         {label:"Minimal", desc:"Évitement minimal.", score:1},
+         {label:"Moyen", desc:"Évitement net mais limité.", score:2},
+         {label:"Important", desc:"L'évitement est un comportement dominant.", score:3},
+         {label:"Extrême", desc:"Évitement extrême et très élargi : le patient fait tout ce qu'il peut pour éviter de déclencher les symptômes.", score:4}
+       ]},
+      {n:13, grp:"ADD", core:false, text:"Degré d'indécision",
+       q:"Éprouvez-vous des difficultés à prendre des décisions à propos de problèmes mineurs qui ne demanderaient qu'un temps très bref de réflexion à la plupart des gens (par exemple : comment s'habiller le matin) ? (Ne pas considérer ici la difficulté à décider liée à une tendance à ruminer ; l'ambivalence dans les choix rendus difficiles par des aspects rationnels ne doit pas non plus être prise en compte.)",
+       opts:[
+         {label:"Aucune", score:0},
+         {label:"Légère", desc:"Quelques difficultés à prendre des décisions à propos de problèmes mineurs.", score:1},
+         {label:"Moyenne", desc:"Rapporte spontanément une difficulté significative à prendre des décisions, comparée au temps de réflexion que cette même décision prendrait à une autre personne.", score:2},
+         {label:"Importante", desc:"Pèse continuellement le pour et le contre pour des problèmes très secondaires.", score:3},
+         {label:"Extrêmement importante", desc:"Incapable de prendre la moindre décision. Indécision invalidante.", score:4}
+       ]},
+      {n:14, grp:"ADD", core:false, text:"Surestimation du sens des responsabilités",
+       q:"Avez-vous tendance à vous reprocher la survenue d'événements qui ne sont pas complètement sous votre contrôle ? Vous sentez-vous très responsable de ce qui arrive aux autres ?",
+       opts:[
+         {label:"Pas du tout", score:0},
+         {label:"Légère", desc:"Mentionnée uniquement si l'on interroge le patient à ce sujet. Léger sentiment d'une haute responsabilité.", score:1},
+         {label:"Moyenne", desc:"Idées de responsabilité clairement présentes et spontanément développées par le patient. Sens élevé de sa responsabilité pour des événements survenus, au-delà de ce qu'il pouvait raisonnablement contrôler.", score:2},
+         {label:"Importante", desc:"Idées dominantes et envahissantes de sa responsabilité ; profondément convaincu d'être responsable d'événements survenus nettement au-delà de ce qu'il pouvait raisonnablement contrôler. Auto-accusation, culpabilisation, à la limite de l'irrationnel.", score:3},
+         {label:"Extrêmement importante", desc:"Sens abusif des responsabilités, à la limite de l'hallucination (ex. : si un tremblement de terre se produit à 5 000 km, le patient se sentira coupable et se reprochera de ne pas avoir fait ses rituels).", score:4}
+       ]},
+      {n:15, grp:"ADD", core:false, text:"Lenteur générale — gêne liée à l'inertie",
+       q:"Est-il difficile pour vous de démarrer ou d'achever une activité, du fait de votre souci perfectionniste ? Beaucoup de tâches routinières vous prennent-elles plus de temps qu'elles ne le nécessiteraient ? (Ne pas confondre avec le ralentissement psychomoteur secondaire à une dépression. Évaluez le surcroît de temps passé aux activités routinières, même si l'on n'identifie pas véritablement d'obsessions spécifiques.)",
+       opts:[
+         {label:"Nulle", score:0},
+         {label:"Légère", desc:"Latence occasionnelle pour démarrer ou finir une activité.", score:1},
+         {label:"Moyenne", desc:"Prolongation fréquente des activités routinières, mais en général les tâches sont achevées ; souvent en retard.", score:2},
+         {label:"Importante", desc:"Difficulté nette et généralisée pour démarrer et terminer des activités routinières. Presque toujours en retard.", score:3},
+         {label:"Extrêmement importante", desc:"Incapable de démarrer ou d'achever des tâches routinières sans une assistance totale.", score:4}
+       ]},
+      {n:16, grp:"ADD", core:false, text:"Doute pathologique",
+       q:"Avez-vous l'impression de ne pas faire confiance à votre mémoire, ou de ne pas être sûr(e) de vos perceptions (par exemple, douter de ce que vous voyez, entendez ou touchez) ? Êtes-vous très gêné(e) par le fait de douter de vous-même ?",
+       opts:[
+         {label:"Pas du tout", score:0},
+         {label:"Léger", desc:"Mentionné uniquement si l'on pose la question ; faible sentiment de douter de soi.", score:1},
+         {label:"Moyen", desc:"Ces idées sont exprimées spontanément, nettement présentes. Le patient est gêné par un doute de soi important. Effets certains sur ses performances, mais il peut encore assez bien faire face.", score:2},
+         {label:"Important", desc:"L'incertitude au niveau des perceptions ou de la mémoire est dominante. Le doute de soi affecte très souvent les performances.", score:3},
+         {label:"Extrêmement important", desc:"L'incertitude sur les perceptions est constamment présente ; le doute de soi affecte pratiquement toutes les activités. Doute invalidant (ex. : le patient dit « mon cerveau ne croit pas ce que mes yeux voient »).", score:4}
+       ]},
+      {n:17, grp:"ADD", core:false, text:"Gravité globale",
+       q:"Appréciation de la gravité de la maladie du patient par l'interviewer, de 0 (pas de problème) à 6 (patient le plus grave parmi ceux que l'on a pu voir). Considérez le degré d'angoisse rapportée, les symptômes observés et la perturbation apportée dans la vie du patient. L'appréciation tiendra compte d'une évaluation moyenne de ces données et de la justesse des informations obtenues au cours de l'entretien.",
+       opts:[
+         {label:"Aucun problème", score:0},
+         {label:"À la limite de la normale", desc:"Très léger problème, aspect très occasionnel, aucune gêne dans la vie du patient.", score:1},
+         {label:"Léger", desc:"Symptômes légers, légère gêne dans la vie du patient.", score:2},
+         {label:"Moyen", desc:"Symptômes moyennement importants. Le patient doit faire des efforts pour faire face à ses activités quotidiennes.", score:3},
+         {label:"Marqué", desc:"Symptômes plus gravement importants. Le patient est limité dans ses activités quotidiennes.", score:4},
+         {label:"Grave", desc:"Symptômes graves, le patient doit être le plus souvent assisté dans ses activités quotidiennes.", score:5},
+         {label:"Extrême", desc:"Symptômes extrêmement graves, le patient est complètement invalide.", score:6}
+       ]},
+      {n:18, grp:"ADD", core:false, text:"Amélioration globale",
+       q:"Évaluez l'amélioration globale actuelle — depuis le début de l'évaluation — que cette amélioration soit ou non, à votre avis, due au traitement.",
+       opts:[
+         {label:"Très nettement aggravé", score:0},
+         {label:"Nettement aggravé", score:1},
+         {label:"Légèrement aggravé", score:2},
+         {label:"Pas de changement", score:3},
+         {label:"Légèrement amélioré", score:4},
+         {label:"Nettement amélioré", score:5},
+         {label:"Très nettement amélioré", score:6}
+       ]},
+      {n:19, grp:"ADD", core:false, text:"Fiabilité",
+       q:"Évaluez la fiabilité globale des scores obtenus. Parmi les facteurs pouvant l'affecter : la collaboration du patient et sa facilité naturelle à communiquer. Le type et la gravité des symptômes obsessionnels peuvent influencer sa concentration, son attention ou sa liberté à s'exprimer spontanément (certaines obsessions peuvent amener le patient à choisir son vocabulaire d'une manière particulièrement soignée).",
+       opts:[
+         {label:"Excellente", desc:"Aucune raison de suspecter les données.", score:0},
+         {label:"Bonne", desc:"Présence de facteurs qui peuvent affecter défavorablement la fiabilité des données.", score:1},
+         {label:"Légère", desc:"Présence de facteurs qui réduisent nettement la fiabilité des données.", score:2},
+         {label:"Pauvre", desc:"Données très peu fiables.", score:3}
+       ]}
+    ],
+    annexes:{
+      intro:"Préambule à renseigner avant la cotation. Annexe 1 : repérez les symptômes présents (Actuelle / Passée, commentaire libre). Annexe 2 : notez les symptômes-cibles retenus pour l'entretien.",
+      checklist:{
+        obsessions:[
+          {cat:"Obsessions à thème agressif", items:[
+            "Peur de faire du mal aux autres",
+            "Peur de se faire du mal",
+            "Images de violence ou d'horreur",
+            "Peur de laisser échapper des obscénités ou des insultes",
+            "Peur de faire quelque chose qui met dans l'embarras",
+            "Peur d'agir sous d'autres impulsions (ex. : voler une banque, voler à l'étalage, être malhonnête avec une caissière)",
+            "Peur d'être responsable de ce qui va mal (ex. : la compagnie va faire faillite à cause du patient)",
+            "Peur que quelque chose de terrible puisse arriver (ex. : le feu, un cambriolage, la mort ou la maladie d'un proche ; superstitions diverses)",
+            "Autres"
+          ]},
+          {cat:"Obsessions de contamination", items:[
+            "Angoisse ou dégoût lié aux déchets ou aux sécrétions corporels (ex. : urine, selles, salive)",
+            "Angoisse liée à la saleté ou aux microbes",
+            "Angoisse excessive liée aux éléments contaminants dans l'environnement (ex. : amiante, radiations, déchets toxiques)",
+            "Angoisse excessive liée aux éléments touchant la maison (ex. : détergents, solvants, animaux familiers)",
+            "Angoisse à l'idée d'être malade",
+            "Angoisse à l'idée de provoquer une maladie chez les autres (agressivité)",
+            "Autres"
+          ]},
+          {cat:"Obsessions sexuelles", items:[
+            "Impulsions, images ou pensées perverses ou interdites à propos de la sexualité",
+            "Le contenu a trait à des enfants",
+            "Le contenu a trait à des animaux",
+            "Le contenu a trait à l'homosexualité",
+            "Comportement sexuel envers les autres (agressivité)",
+            "Autres"
+          ]},
+          {cat:"Obsessions de collection, d'accumulation"},
+          {cat:"Obsessions religieuses"},
+          {cat:"Obsessions de symétrie, d'exactitude, d'ordre"},
+          {cat:"Obsessions diverses", items:[
+            "Besoin de savoir ou de se souvenir",
+            "Peur de dire certaines choses",
+            "Peur de ne pas dire exactement ce qu'il faut",
+            "Images parasites (neutres)",
+            "Sons, mots ou musiques parasites et dénués de sens",
+            "Nombres qui portent bonheur ou non",
+            "Attribution de significations spéciales aux couleurs",
+            "Autres"
+          ]},
+          {cat:"Obsessions / compulsions somatiques"}
+        ],
+        compulsions:[
+          {cat:"Compulsions de lavage / nettoyage", items:[
+            "Lavage des mains ritualisé ou excessif",
+            "Soins corporels ritualisés ou excessifs (douche, bain, brossage des dents...)",
+            "Nettoyage d'objets appartenant à la maison ou non",
+            "Mesures supplémentaires pour supprimer le contact avec des éléments contaminants",
+            "Mesures supplémentaires pour supprimer les éléments contaminants"
+          ]},
+          {cat:"Compulsions ayant pour thème le fait de compter"},
+          {cat:"Compulsions de vérification", items:[
+            "Vérifier les portes, serrures, cuisinière, appareils ménagers, frein à main, etc.",
+            "Vérifier que rien ne risque de faire du tort aux autres",
+            "Vérifier que rien ne risque de faire du tort à soi-même",
+            "Vérifier que rien ne puisse être contaminant",
+            "Autres vérifications"
+          ]},
+          {cat:"Rituels de répétition", items:[
+            "Sortir / entrer — se lever / s'asseoir, etc.",
+            "Autres"
+          ]},
+          {cat:"Compulsions d'ordre / de rangement"},
+          {cat:"Compulsions de collection"},
+          {cat:"Compulsions diverses", items:[
+            "Rituels mentaux (autres que vérifier ou compter)",
+            "Besoin de dire, de demander, de confesser...",
+            "Besoin de toucher",
+            "Mesures pour s'empêcher de se faire du mal, de faire du mal aux autres, ou pour éviter des conséquences catastrophiques",
+            "Autres"
+          ]}
+        ]
+      }
+    },
+    references:[
+      "American Psychiatric Association. Diagnostic and Statistical Manual, 3rd ed., Revised (DSM-III-R). A.P.A., Washington DC, 1987.",
+      "Goodman W, Price H, Rasmussen S et al. The Yale-Brown obsessive compulsive scale (Y-BOCS). Part I. Development, use and reliability. 1988.",
+      "Goodman W, Price H, Rasmussen S et al. The Yale-Brown obsessive compulsive scale (Y-BOCS). Part II. Validity. 1988.",
+      "Goodman W, Price H, Rasmussen S et al. Efficacy of Fluvoxamine in obsessive-compulsive disorder. A double-blind comparison with placebo. Arch Gen Psychiatry, 1988.",
+      "Perse T, Greist J, Jefferson J et al. Fluvoxamine treatment of obsessive-compulsive disorder. Am J Psychiatry, 1987 ; 144 : 1543-8.",
+      "Price L, Goodman W, Charney D et al. Treatment of severe obsessive-compulsive disorder with Fluvoxamine. Am J Psychiatry, 1987 ; 144 : 1059-61."
+    ],
+    source:"Version française : E. Mollard, J. Cottraux, M. Bouvard. « Version française de l'échelle d'obsession-compulsion de Yale-Brown ». L'Encéphale, 1989 ; XV : 335-341. Items 17 et 18 adaptés de la Clinical Global Impression Scale (Guy W. Ecdeu, Assessment Manual for Psychopharmacology, US DHEW, 1976).",
+    scoring:{
+      totalMax:40,
+      bands:[[0,7,"Infraclinique (0–7)"],[8,15,"Léger (8–15)"],[16,23,"Modéré (16–23)"],[24,31,"Sévère (24–31)"],[32,40,"Extrême (32–40)"]],
+      marks:[8,16,24,32],
+      subscales:{ OBS:["Obsessions",null,20], COMP:["Compulsions",null,20] },
+      subOrder:["OBS","COMP"],
+      details:"Score total Y-BOCS = somme des items 1 à 10 (0–40) = sous-total obsessions (items 1–5) + sous-total compulsions (items 6–10).\n\nRepères de sévérité usuels (Goodman et al.), non spécifiés dans la version française de 1989 :\n0–7 : infraclinique\n8–15 : léger\n16–23 : modéré\n24–31 : sévère\n32–40 : extrême\n\nÀ titre indicatif, le score moyen avant traitement rapporté dans l'article français est d'environ 25 à 28. Outil d'aide à la passation et au calcul ; il ne pose pas de diagnostic.",
+      note:"Items 11 à 19 : additionnels (heuristiques), non inclus dans le score total Y-BOCS (items 1 à 10)."
+    }
+  },
+
+  {
+    id:"DIVA5",
+    category:"TDAH",
+    title:"DIVA-5",
+    subtitle:"Entretien diagnostique pour le TDAH chez l'adulte (DIVA-5)",
+    lead:"Entretien structuré fondé sur les critères du DSM-5, coté par le clinicien — à l'âge adulte et dans l'enfance.",
+    palette:{accent:"#1f5aa8", accentD:"#15407a", accentL:"#7ba3d4"},
+    kind:"diva",
+    consignes:{
+      AT:"<h2>Consignes — Section 1 : Déficit attentionnel</h2>"
+        +"<p>Posez chaque critère (A1 à A9) dans l'ordre. Pour chacun : lisez la question, évaluez le symptôme <strong>à l'âge adulte</strong> (présent depuis au moins 6 mois), puis <strong>dans l'enfance</strong> (entre 5 et 12 ans). Aidez-vous des exemples — cochez ceux que le patient reconnaît, notez les autres sous « Autre ».</p>"
+        +"<p>Un symptôme est retenu s'il est d'<strong>allure chronique</strong> (non épisodique) et survient de manière plus fréquente ou plus intense que chez les personnes du même âge et de même niveau intellectuel. Complétez si possible par l'avis d'un proche ; les livrets scolaires peuvent aider pour l'enfance. C'est le jugement clinique qui détermine la réponse la plus appropriée.</p>",
+      HI:"<h2>Consignes — Section 2 : Hyperactivité / Impulsivité</h2>"
+        +"<p>Même principe que la Section 1 : pour chaque critère (H/I 1 à H/I 9), cotez le symptôme à l'âge adulte puis dans l'enfance, en vous appuyant sur les exemples. Le symptôme doit être d'allure chronique et non épisodique.</p>",
+      FN:"<h2>Consignes — Section 3 : Altération du fonctionnement</h2>"
+        +"<p>Recherchez d'abord l'<strong>âge de début</strong> (critère B) : les symptômes ont-ils toujours été présents, et plusieurs (au moins 3 par domaine) étaient-ils présents avant l'âge de 12 ans ?</p>"
+        +"<p>Évaluez ensuite le <strong>retentissement</strong> (critères C et D) : cochez les situations où il est visible, à l'âge adulte puis dans l'enfance. Le trouble est retenu si le retentissement touche <strong>au moins deux domaines</strong> de la vie courante. Terminez par le critère E, les informations collatérales, la présentation clinique et la sévérité.</p>"
+    },
+    presentations:[
+      {k:"comb",  code:"314.01", label:"Présentation combinée"},
+      {k:"inatt", code:"314.00", label:"Présentation inattentive prédominante"},
+      {k:"hyper", code:"314.01", label:"Présentation hyperactive / impulsive prédominante"},
+      {k:"autre", code:"314.01", label:"Autre déficit de l'attention / hyperactivité spécifié"},
+      {k:"ns",    code:"314.01", label:"Déficit de l'attention / hyperactivité non spécifié"}
+    ],
+    severities:[{k:"leg",label:"Légère"},{k:"mod",label:"Modérée"},{k:"sev",label:"Sévère"}],
+    attention:[
+      {id:"A1", crit:"A1a", label:"A1",
+       stmt:"A souvent du mal à prêter attention aux détails, ou fait souvent des erreurs d'étourderie dans son travail ou dans d'autres activités",
+       q:"Avez-vous souvent du mal à prêter attention aux détails, ou faites-vous souvent des erreurs d'étourderie dans votre travail ou dans d'autres activités ? Comment était-ce dans votre enfance (dans le travail scolaire ou dans d'autres activités) ?",
+       adultEx:["Fait des erreurs d'étourderie","Travaille lentement pour éviter les erreurs","Le travail est imprécis","Ne lit pas les instructions avec soin","Néglige ou manque des détails","Besoin de trop de temps pour mener à leur terme des tâches minutieuses ou comportant de nombreux détails","Facilement empêtré par les détails","Commet des erreurs parce que travaille trop rapidement"],
+       childEx:["Erreurs d'étourderie dans le travail scolaire","Erreurs parce qu'il ne lisait pas les questions correctement","Néglige ou manque des détails","Le travail est imprécis","Ne répondait pas à des questions parce qu'il ne les lisait pas correctement","Ne répondait pas aux questions posées au verso d'un examen","Les autres faisaient remarquer que le travail n'était pas soigné","Ne vérifiait pas ses réponses dans les devoirs scolaires","Besoin de trop de temps pour mener à leur terme des tâches minutieuses ou comportant de nombreux détails"]},
+      {id:"A2", crit:"A1b", label:"A2",
+       stmt:"Trouve souvent difficile de maintenir son attention sur des tâches",
+       q:"Trouvez-vous souvent difficile de maintenir votre attention sur des tâches ? Comment était-ce dans votre enfance (dans les activités de jeu) ?",
+       adultEx:["Incapable de maintenir longtemps l'attention sur des tâches *","Facilement distrait par ses propres pensées ou associations d'idées","Facilement distrait par des pensées sans rapport avec la tâche ou le contexte","Du mal à rester concentré pendant des conférences et/ou des conversations","Difficile de suivre un film jusqu'à la fin, ou de lire un livre *","Rapidement ennuyé par les choses *","Pose des questions sur des sujets déjà discutés"],
+       childEx:["Du mal à maintenir l'attention lors du travail scolaire","Du mal à maintenir l'attention sur un jeu *","Du mal à rester concentré pendant des cours et/ou des conversations","Facilement distrait","Du mal à se concentrer *","Besoin d'un environnement structuré pour ne pas être distrait","Rapidement lassé dans ses activités *"],
+       note:"* À moins que le patient trouve le sujet particulièrement intéressant (par exemple, ordinateur ou hobby)."},
+      {id:"A3", crit:"A1c", label:"A3",
+       stmt:"Donne souvent l'impression de ne pas écouter lorsqu'on lui parle directement",
+       q:"Donnez-vous souvent l'impression de ne pas écouter lorsqu'on vous parle directement ? Comment était-ce dans votre enfance ?",
+       adultEx:["Rêveur ou préoccupé","Du mal à se concentrer pendant une conversation","Après-coup, ne se rappelle pas du sujet d'une conversation","Change souvent de sujet dans une conversation","D'autres personnes vous disent que vos pensées sont ailleurs","L'esprit est ailleurs, même en l'absence d'une distraction évidente"],
+       childEx:["Ne sait plus ce que les parents/enseignants ont dit","Rêveur ou préoccupé","Besoin d'un contact visuel ou qu'on élève la voix pour écouter","L'esprit est ailleurs, même en l'absence d'une distraction évidente","Souvent il faut l'appeler plusieurs fois","Les questions doivent être répétées"]},
+      {id:"A4", crit:"A1d", label:"A4",
+       stmt:"A souvent du mal à se conformer aux consignes et à mener à terme ses tâches domestiques ou ses obligations professionnelles au travail",
+       q:"Avez-vous souvent du mal à suivre les consignes et à mener à terme vos tâches domestiques ou vos obligations professionnelles au travail ? Comment était-ce dans votre enfance (dans le travail scolaire) ?",
+       adultEx:["Fait plusieurs tâches en même temps sans les terminer","Commence quelque chose mais perd très vite sa concentration et est facilement détourné du but","Besoin de fixer une durée limite pour terminer les tâches","Du mal à terminer les tâches administratives","Du mal à suivre les instructions dans un manuel"],
+       childEx:["Du mal à suivre les consignes","En difficulté lorsque les tâches comprennent plusieurs étapes successives","Commence quelque chose mais perd très vite sa concentration et est facilement détourné du but","Ne termine pas les choses","Ne termine pas les devoirs ou ne les rend pas","A besoin de structure pour pouvoir terminer les tâches"]},
+      {id:"A5", crit:"A1e", label:"A5",
+       stmt:"Trouve souvent difficile d'organiser ses tâches ou ses activités",
+       q:"Trouvez-vous souvent difficile d'organiser les tâches ou les activités ? Comment était-ce dans votre enfance ?",
+       adultEx:["Du mal à planifier les activités de la vie quotidienne","Du mal à gérer des tâches séquentielles","La maison et/ou l'espace de travail est en désordre","Du mal à maintenir en ordre des documents ou des effets personnels","Travaille de manière brouillonne ou désorganisée","Planifie trop de tâches ou planification inefficace","Prévoit régulièrement de faire plusieurs choses au même moment (doublons)","Arrive en retard","Ne respecte pas les dates limites","Incapable d'utiliser un agenda ou un journal personnel de manière efficace","Rigide pour arriver à respecter le planning","Faible conscience et mauvaise gestion du temps","Établit des plannings sans les utiliser","Besoin qu'un tiers structure les choses"],
+       childEx:["Du mal à être prêt à temps","Chambre / bureau en désordre et/ou travail brouillon","Du mal à maintenir en ordre des documents ou des effets personnels","Du mal à jouer seul","Du mal à planifier des tâches ou ses devoirs","Ne respecte pas les dates limites","Fait les choses de manière embrouillée","Arrive en retard","Faible conscience du temps","Du mal à s'occuper seul"]},
+      {id:"A6", crit:"A1f", label:"A6",
+       stmt:"Évite souvent (ou a en aversion, ou fait à contrecœur) les tâches qui nécessitent un effort mental soutenu",
+       q:"Évitez-vous souvent (ou avez-vous en aversion, ou faites-vous à contrecœur) les tâches qui nécessitent un effort mental soutenu ? Comment était-ce dans votre enfance ?",
+       adultEx:["Fait en premier les choses les plus faciles ou les plus agréables","Remet souvent à plus tard les tâches ennuyeuses ou difficiles","Remet à plus tard les tâches jusqu'à dépasser les échéances","Évite les tâches monotones, comme les tâches administratives","Évite de rédiger des rapports, remplir des formulaires ou vérifier des documents longs","N'aime pas lire à cause de l'effort mental","Évite des tâches qui demandent beaucoup de concentration"],
+       childEx:["Évite les devoirs ou les a en aversion","Lit peu de livres ou n'aime pas lire à cause de l'effort mental","Évite des tâches qui demandent beaucoup de concentration","Déteste les sujets scolaires qui demandent beaucoup de concentration","Remet à plus tard les tâches ennuyeuses ou difficiles"]},
+      {id:"A7", crit:"A1g", label:"A7",
+       stmt:"Perd souvent les objets nécessaires à son travail ou à ses activités",
+       q:"Perdez-vous souvent les objets nécessaires à votre travail ou vos activités ? Comment était-ce dans votre enfance ?",
+       adultEx:["Égare outils, paperasse, lunettes, téléphone portable, portefeuille, clés, ou agenda","Oublie des choses en quittant un lieu","Perd des papiers pour son travail","Perd beaucoup de temps à chercher des choses","Panique si des gens ont changé des choses de place","Range les choses au mauvais endroit","Perd des notes, listes ou numéros de téléphone"],
+       childEx:["Perd son matériel scolaire, crayons, livres, ou d'autres choses encore","Égare des jouets, habits ou devoirs scolaires","Perd beaucoup de temps à chercher des choses","Panique si des gens ont changé des choses de place","Les parents et/ou les enseignants font remarquer qu'il a perdu des choses"]},
+      {id:"A8", crit:"A1h", label:"A8",
+       stmt:"Se laisse souvent facilement distraire par des stimuli externes",
+       q:"Vous laissez-vous souvent facilement distraire par des stimuli externes ? Comment était-ce dans votre enfance ?",
+       adultEx:["Du mal à ignorer des stimuli externes","Du mal à reprendre le fil après avoir été distrait","Facilement distrait par des bruits ou des événements","Facilement distrait par une conversation entre d'autres personnes","Du mal à filtrer et/ou sélectionner des informations"],
+       childEx:["En classe, il regarde souvent dehors","Facilement distrait par des bruits ou des événements","Du mal à reprendre le fil après avoir été distrait"]},
+      {id:"A9", crit:"A1i", label:"A9",
+       stmt:"Oublie souvent ce qu'il a à faire au quotidien",
+       q:"Oubliez-vous souvent ce que vous avez à faire dans vos activités quotidiennes ? Comment était-ce dans votre enfance ?",
+       adultEx:["Oublie des rendez-vous ou des obligations","Oublie les clés, l'agenda, etc.","A besoin de rappels fréquents concernant les rendez-vous","Oublie de payer des factures ou de rappeler des personnes","Retourne à la maison pour récupérer des choses oubliées","Utilise des listes de manière rigide pour être sûr de ne rien oublier","Ne tient pas à jour son agenda et/ou oublie de consulter son agenda","Oublie de faire ses corvées ou ses courses"],
+       childEx:["Oublie des rendez-vous ou des consignes","Oublie de faire ses corvées ou ses courses","On doit souvent lui rappeler les choses","S'arrête en chemin parce qu'il a oublié ce qu'il devait faire","Oublie d'apporter des affaires à l'école","Oublie des choses à l'école ou chez des amis"]}
+    ],
+    hyper:[
+      {id:"HI1", crit:"A2a", label:"H/I 1",
+       stmt:"Remue souvent les mains ou les pieds, tapote souvent des doigts ou tape souvent des pieds, ou se tortille souvent sur son siège",
+       q:"Remuez-vous souvent les mains ou les pieds, tapotez-vous souvent des doigts ou tapez-vous souvent des pieds, ou vous tortillez-vous souvent sur votre siège ? Comment était-ce dans votre enfance ?",
+       adultEx:["Du mal à rester assis immobile","Remue les jambes","Tapote avec un stylo ou joue avec un objet","Tortille les cheveux ou ronge les ongles","Capable de contrôler l'agitation mais ressent du stress"],
+       childEx:["Les parents disent souvent des choses comme « tiens-toi tranquille »","Remue les jambes","Tapote avec un stylo ou joue avec un objet","Tortille les cheveux ou ronge les ongles","Incapable de rester assis de façon relaxée","Capable de contrôler l'agitation mais ressent du stress"]},
+      {id:"HI2", crit:"A2b", label:"H/I 2",
+       stmt:"Se lève souvent dans des situations où il est supposé rester assis",
+       q:"Vous levez-vous souvent dans des situations où vous êtes supposé rester assis ? Comment était-ce dans votre enfance ?",
+       adultEx:["Se lève souvent de son siège au bureau ou sur son lieu de travail","Évite les réunions, les conférences, les cérémonies religieuses, etc.","Préfère marcher plutôt que rester assis","Ne reste jamais longtemps assis tranquille, bouge sans cesse","Stressé par l'obligation de rester assis","Cherche des excuses pour pouvoir se déplacer"],
+       childEx:["Se lève souvent pendant les repas ou quitte sa place en classe","Trouve très difficile de rester assis en classe ou pendant les repas","On lui dit souvent de rester assis","Cherche des excuses pour pouvoir se déplacer"]},
+      {id:"HI3", crit:"A2c", label:"H/I 3",
+       stmt:"Se sent souvent agité",
+       q:"Vous sentez-vous souvent agité ? Comment était-ce dans votre enfance ?",
+       adultEx:["Se sent agité ou nerveux à l'intérieur","Ressent constamment le sentiment d'avoir quelque chose à faire","Trouve difficile de se relaxer"],
+       childEx:["Toujours court alors cela n'est pas approprié","Grimpe sur les meubles ou saute sur les fauteuils","Monte aux arbres","Se sent agité à l'intérieur"]},
+      {id:"HI4", crit:"A2d", label:"H/I 4",
+       stmt:"Trouve souvent difficile de profiter tranquillement d'un moment de détente",
+       q:"Trouvez-vous souvent difficile de profiter tranquillement d'un moment de détente ? Comment était-ce dans votre enfance (dans les activités de jeu) ?",
+       adultEx:["Parle pendant les activités alors que cela n'est pas approprié","Se met rapidement en avant en public","Bruyant dans tout type de situations","Du mal à faire des activités tranquillement","Du mal à parler doucement"],
+       childEx:["Parle à voix haute en jouant ou en classe","Incapable de regarder la TV ou un film tranquillement","On lui demande souvent de se calmer ou d'être plus tranquille","Se met rapidement en avant en public"]},
+      {id:"HI5", crit:"A2e", label:"H/I 5",
+       stmt:"Est souvent « sur la brèche » ou agit souvent comme s'il était « dirigé par un moteur »",
+       q:"Êtes-vous souvent « sur la brèche » ou comme si vous étiez « dirigé par un moteur » ? Comment était-ce dans votre enfance ?",
+       adultEx:["Toujours occupé à faire quelque chose","Pas à l'aise de devoir rester assis pour une longue durée, par exemple au restaurant ou dans des réunions","Déborde d'énergie, toujours en mouvement","On vous trouve agité ou difficile à suivre","Dépasse ses propres limites","Lâche difficilement prise, excessivement insistant"],
+       childEx:["Constamment occupé","On vous trouve agité ou difficile à suivre","Pas à l'aise de devoir rester assis pour une longue durée","Se fait remarquer par son activité en classe ou à la maison","Déborde d'énergie","Toujours sur la brèche, monté sur ressorts"]},
+      {id:"HI6", crit:"A2f", label:"H/I 6",
+       stmt:"Parle souvent trop",
+       q:"Parlez-vous souvent trop ? Comment était-ce dans votre enfance ?",
+       adultEx:["Parle tellement que les gens trouvent cela fatiguant","Connu pour parler de manière incessante","Trouve difficile d'arrêter de parler","Tendance à trop parler","Ne laisse pas l'occasion aux autres d'intervenir dans une conversation","Besoin de beaucoup de mots pour dire quelque chose"],
+       childEx:["Connu comme un « moulin à paroles »","Les enfants ou les enseignants demandent souvent de se taire","Les bulletins scolaires mentionnent souvent des bavardages","Puni pour avoir trop parlé","Gêne le travail scolaire des autres en parlant trop","Ne laisse pas les autres parler dans une conversation"]},
+      {id:"HI7", crit:"A2g", label:"H/I 7",
+       stmt:"Laisse souvent échapper la réponse à une question qui n'est pas encore entièrement posée",
+       q:"Laissez-vous souvent échapper la réponse à une question qui n'est pas encore entièrement posée ? Comment était-ce dans votre enfance ?",
+       adultEx:["Pipelette, dit ce qu'il pense","Dit les choses sans réfléchir","Donne des réponses avant que les gens aient fini de parler","Finit les phrases des autres","Manque de tact"],
+       childEx:["Pipelette, dit les choses sans réfléchir","Veut être le premier à répondre aux questions en classe","Donne la première réponse qui lui vient à l'esprit","Interrompt les autres avant que les phrases soient finies","Du mal à attendre son tour dans des conversations","Donne l'impression de manquer de tact"]},
+      {id:"HI8", crit:"A2h", label:"H/I 8",
+       stmt:"A souvent du mal à attendre son tour",
+       q:"Trouvez-vous souvent difficile d'attendre votre tour ? Comment était-ce dans votre enfance ?",
+       adultEx:["Difficulté à attendre dans une file d'attente, veut doubler dans une file d'attente","Du mal à attendre patiemment dans la circulation ou les embouteillages","Impatient","Démarre rapidement ou met brutalement un terme à des relations ou des emplois par impatience"],
+       childEx:["Du mal à attendre son tour dans les activités en groupe","Du mal à attendre son tour en classe","Toujours le premier à parler ou agir","Rapidement impatient","Traverse la route sans regarder"]},
+      {id:"HI9", crit:"A2i", label:"H/I 9",
+       stmt:"Interrompt souvent les autres ou impose sa présence",
+       q:"Interrompez-vous souvent les autres ou imposez-vous votre présence ? Comment était-ce dans votre enfance ?",
+       adultEx:["Prompt à gêner les autres","Impose sa présence aux autres (intrusif)","Dérange les autres dans leurs activités sans qu'on lui ait rien demandé, ou fait à leur place","Les autres font remarquer qu'il est intrusif","Du mal à respecter les limites des autres","A une opinion sur tout et la donne immédiatement"],
+       childEx:["Interrompt les autres dans leurs jeux ou leurs activités","Utilise les affaires des autres sans leur demander ou sans leur permission","Interrompt les conversations des autres","Réagit sur tout","Incapable d'attendre"]}
+    ],
+    domains:{
+      adult:[
+        {name:"Travail / éducation", ex:["N'a pas atteint le niveau d'étude pour travailler","Travaille en deçà du niveau d'études","Rapidement fatigué d'un lieu de travail","Succession de plusieurs emplois à court terme","Difficulté avec le travail administratif / la planification","N'obtient pas de promotions","Sous-performant au travail","A quitté un emploi après une dispute ou a été renvoyé","Arrêts de travail ou invalidité liés aux symptômes","Retentissement atténué par un niveau intellectuel élevé","Retentissement atténué par la structure externe"]},
+        {name:"Relations et/ou famille", ex:["Rapidement fatigué par les relations","Débute / termine impulsivement les relations","Relations conjugales inégales du fait des symptômes","Problèmes relationnels, nombreuses disputes, manque d'intimité","Divorce du fait des symptômes","Problèmes sexuels du fait des symptômes","Problèmes avec l'éducation à cause des symptômes","Difficultés ménagères et/ou administratives","Problèmes financiers ou jeux d'argent","N'ose pas commencer une relation"]},
+        {name:"Contacts sociaux", ex:["Rapidement fatigué par les contacts sociaux","Difficulté à maintenir des contacts sociaux","Conflits résultant de problèmes de communication","Difficulté à initier des contacts sociaux","Faible affirmation de soi du fait d'expériences négatives","Inattention (par exemple, oubli d'envoyer une carte, d'être empathique, d'appeler au téléphone, etc.)"]},
+        {name:"Temps libre / loisirs", ex:["Incapable de se relaxer complètement pendant le temps libre","Obligé de pratiquer beaucoup de sport pour se relaxer","Blessures liées à une pratique sportive excessive","Incapable de terminer un livre ou de regarder un film jusqu'à la fin","Fatigué parce qu'affairé en permanence","Rapidement lassé par les hobbies","Accidents ou suspension de permis de conduire suite à une conduite imprudente","Recherche de sensations et/ou prise trop fréquente de risques","Problèmes avec la police / la justice","Hyperphagie / Binge eating"]},
+        {name:"Confiance en soi / image de soi", ex:["Doute de lui-même du fait des remarques négatives des autres","Image de soi négative du fait des échecs du passé","Peur de l'échec au moment de commencer de nouvelles choses","Réaction excessive aux critiques","Perfectionnisme","Affecté par les symptômes du TDAH"]}
+      ],
+      child:[
+        {name:"Éducation", ex:["Niveau d'études inférieur à celui prédit par le QI","Redoublements à cause de problèmes de concentration","Études inachevées / Renvoi d'un établissement scolaire","Plus d'années que nécessaire pour terminer les études","A obtenu un niveau d'étude conforme au QI mais avec beaucoup d'efforts","Difficulté à faire les devoirs","Éducation spéciale à cause des symptômes","Commentaires des enseignants sur le comportement ou la concentration","Retentissement atténué par un niveau intellectuel élevé","Retentissement atténué par la structure externe"]},
+        {name:"Famille", ex:["Disputes fréquentes avec frères et sœurs","Punitions ou corrections fréquentes","Peu de contacts avec la famille à cause des conflits","A nécessité le soutien des parents pour une période plus longue que la normale"]},
+        {name:"Contacts sociaux", ex:["Difficulté à maintenir des contacts sociaux","Conflits du fait de problèmes de communication","Difficulté à initier des contacts sociaux","Faible affirmation de soi du fait d'expériences négatives","Peu d'amis","Taquiné par les autres","Exclu du groupe ou n'est pas invité à participer aux activités du groupe","Joue les petits durs"]},
+        {name:"Temps libre / loisirs", ex:["Incapable de se relaxer vraiment pendant le temps libre","Obligé de pratiquer beaucoup de sport pour se relaxer","Blessures liées à une pratique sportive excessive","Incapable de terminer un livre ou de regarder un film jusqu'à la fin","Fatigué parce qu'affairé en permanence","Rapidement lassé par les hobbies","Recherche de sensations et/ou prise trop fréquente de risques","Problèmes avec la police / la justice","Accidents plus fréquents"]},
+        {name:"Confiance en soi / image de soi", ex:["Doute de lui-même du fait des remarques négatives des autres","Image de soi négative du fait des échecs du passé","Peur de l'échec au moment de commencer de nouvelles choses","Réaction excessive aux critiques","Perfectionnisme"]}
+      ]
+    },
+    references:[
+      "American Psychiatric Association. DSM-5, Manuel diagnostique et statistique des troubles mentaux. Coordination générale de la traduction française par Marc-Antoine Crocq et Julien-Daniel Guelfi, Masson, Paris, 2015.",
+      "Kooij JJS. Diagnostic Interview for ADHD in Adults 2.0 (DIVA 2.0). In: Adult ADHD. Diagnostic assessment and treatment. Springer, 2012.",
+      "Pettersson R, Söderström S, Nilsson KW. Diagnosing ADHD in Adults: An Examination of the Discriminative Validity of Neuropsychological Tests and Diagnostic Assessment Instruments. J Atten Disord 2015.",
+      "Ramos-Quiroga JA, Nasillo V, Richarte V, et al. Criteria and Concurrent Validity of DIVA 2.0: A Semi-Structured Diagnostic Interview for Adult ADHD. J Atten Disord 2016.",
+      "Kooij JJS, Francken MH, Bron TI & Wynchank D. DIVA-5, Entretien diagnostic pour le TDAH chez l'adulte (3e édition). DIVA Foundation, Pays-Bas, mars 2019."
+    ],
+    source:"Traduction française : Dr Hervé Caci et Karin Foeken, avec le soutien de l'association TDAH PACA et du Pr Franck J. Baylé ; version finale approuvée par le Dr Hervé Caci, Annet Bron (MSc) et le Dr J.J.S. Kooij (DIVA Foundation). Reproduit avec l'autorisation à partir du « DSM-5 Manuel diagnostique et statistique des troubles mentaux », 5e édition (Copyright 2015, Elsevier Masson SAS). Aucun droit n'est applicable sur le texte de la DIVA."
+  },
+
+  {
+    id:"HAMD",
+    category:"Dépression",
+    title:"HDRS",
+    subtitle:"Échelle de dépression de Hamilton (HDRS, 17 items)",
+    lead:"Hétéro-évaluation cotée par le clinicien, d'après l'entretien et l'état clinique récent.",
+    palette:{accent:"#4a6b8a", accentD:"#33506b", accentL:"#9db4c8"},
+    layout:"blocks",
+    consignesHTML:"<h2>Consignes de passation</h2>"
+      +"<p>Pour chacun des <strong>17 items</strong>, choisissez la définition qui caractérise le mieux le patient. Hétéro-évaluation cotée par le clinicien, d'après l'entretien et l'observation de l'état clinique récent.</p>"
+      +"<p>Le <strong>score total</strong> est la somme des 17 items (0–52). À titre indicatif : 10–13 = symptômes dépressifs légers ; 14–17 = légers à modérés ; ≥ 18 = modérés à sévères. Plus la note est élevée, plus la dépression est sévère ; l'évaluation est généralement répétée toutes les deux semaines.</p>"
+      +"<p class='cnote'>Cet outil aide à la passation et au calcul du score ; il ne pose pas de diagnostic.</p>",
+    items:[
+      {n:1, text:"Humeur dépressive", q:"Tristesse, sentiment d'être sans espoir, impuissant, auto-dépréciation.",
+       opts:[
+         {desc:"Absent.", score:0},
+         {desc:"Ces états affectifs ne sont signalés que si l'on interroge le sujet.", score:1},
+         {desc:"Ces états affectifs sont signalés verbalement spontanément.", score:2},
+         {desc:"Le sujet communique ces états affectifs non verbalement ; par exemple par son expression faciale, son attitude, sa voix et sa tendance à pleurer.", score:3},
+         {desc:"Le sujet ne communique pratiquement que ces états affectifs dans ses communications spontanées verbales et non verbales.", score:4}
+       ]},
+      {n:2, text:"Sentiments de culpabilité",
+       opts:[
+         {desc:"Absent.", score:0},
+         {desc:"S'adresse des reproches à lui-même, a l'impression qu'il a causé un préjudice à des gens.", score:1},
+         {desc:"Idées de culpabilité ou ruminations sur des erreurs passées ou sur des actions condamnables.", score:2},
+         {desc:"La maladie actuelle est une punition. Idées délirantes de culpabilité.", score:3},
+         {desc:"Entend des voix qui l'accusent ou le dénoncent et/ou a des hallucinations visuelles menaçantes.", score:4}
+       ]},
+      {n:3, text:"Suicide",
+       opts:[
+         {desc:"Absent.", score:0},
+         {desc:"A l'impression que la vie ne vaut pas la peine d'être vécue.", score:1},
+         {desc:"Souhaite être mort ou équivalent : toute pensée de mort possible dirigée contre lui-même.", score:2},
+         {desc:"Idées ou geste de suicide.", score:3},
+         {desc:"Tentatives de suicide (coter pour toute tentative sérieuse).", score:4}
+       ]},
+      {n:4, text:"Insomnie du début de la nuit",
+       opts:[
+         {desc:"Pas de difficulté à s'endormir.", score:0},
+         {desc:"Se plaint de difficultés éventuelles à s'endormir ; par exemple de mettre plus d'une demi-heure.", score:1},
+         {desc:"Se plaint d'avoir chaque soir des difficultés à s'endormir.", score:2}
+       ]},
+      {n:5, text:"Insomnie du milieu de la nuit",
+       opts:[
+         {desc:"Pas de difficulté.", score:0},
+         {desc:"Le malade se plaint d'être agité et troublé pendant la nuit.", score:1},
+         {desc:"Il se réveille pendant la nuit (coter pour toutes les fois où le malade se lève du lit, sauf si c'est pour uriner).", score:2}
+       ]},
+      {n:6, text:"Insomnie du matin",
+       opts:[
+         {desc:"Pas de difficulté.", score:0},
+         {desc:"Se réveille de très bonne heure le matin mais se rendort.", score:1},
+         {desc:"Incapable de se rendormir s'il se lève.", score:2}
+       ]},
+      {n:7, text:"Travail et activités",
+       opts:[
+         {desc:"Pas de difficulté.", score:0},
+         {desc:"Pensées et sentiments d'incapacité, fatigue ou faiblesse se rapportant à des activités professionnelles ou de détente.", score:1},
+         {desc:"Perte d'intérêt pour les activités professionnelles ou de détente — décrite directement par le malade, ou indirectement par son apathie, son indécision et ses hésitations (il a l'impression qu'il doit se forcer pour travailler ou pour avoir une activité quelconque).", score:2},
+         {desc:"Diminution du temps d'activité ou diminution de la productivité. À l'hôpital : coter si le malade ne passe pas au moins 3 heures par jour à des activités (aide aux infirmières ou thérapie occupationnelle), à l'exclusion des tâches de routine de la salle.", score:3},
+         {desc:"A arrêté son travail en raison de sa maladie actuelle. À l'hôpital, coter si le malade n'a aucune autre activité que les tâches de routine de la salle, ou s'il est incapable d'exécuter ces tâches de routine sans être aidé.", score:4}
+       ]},
+      {n:8, text:"Ralentissement", q:"Lenteur de la pensée et du langage ; baisse de la faculté de concentration ; baisse de l'activité motrice.",
+       opts:[
+         {desc:"Langage et pensée normaux.", score:0},
+         {desc:"Léger ralentissement à l'entretien.", score:1},
+         {desc:"Ralentissement manifeste à l'entretien.", score:2},
+         {desc:"Entretien difficile.", score:3},
+         {desc:"Stupeur.", score:4}
+       ]},
+      {n:9, text:"Agitation",
+       opts:[
+         {desc:"Aucune.", score:0},
+         {desc:"Crispations, secousses musculaires.", score:1},
+         {desc:"Joue avec ses mains, ses cheveux, etc.", score:2},
+         {desc:"Bouge, ne peut rester assis tranquille.", score:3},
+         {desc:"Se tord les mains, ronge ses ongles, arrache ses cheveux, se mord les lèvres.", score:4}
+       ]},
+      {n:10, text:"Anxiété psychique",
+       opts:[
+         {desc:"Aucun trouble.", score:0},
+         {desc:"Tension subjective et irritabilité.", score:1},
+         {desc:"Se fait du souci à propos de problèmes mineurs.", score:2},
+         {desc:"Attitude inquiète, apparente dans l'expression faciale et le langage.", score:3},
+         {desc:"Peurs exprimées sans qu'on pose de questions.", score:4}
+       ]},
+      {n:11, text:"Anxiété somatique", q:"Concomitants physiques de l'anxiété tels que : gastro-intestinaux (bouche sèche, troubles digestifs, diarrhée, coliques, éructations), cardiovasculaires (palpitations, céphalées), respiratoires (hyperventilation, soupirs), pollakiurie, transpiration.",
+       opts:[
+         {desc:"Absente.", score:0},
+         {desc:"Discrète.", score:1},
+         {desc:"Moyenne.", score:2},
+         {desc:"Grave.", score:3},
+         {desc:"Frappant le sujet d'incapacité fonctionnelle.", score:4}
+       ]},
+      {n:12, text:"Symptômes somatiques gastro-intestinaux",
+       opts:[
+         {desc:"Aucun.", score:0},
+         {desc:"Perte d'appétit, mais mange sans y être poussé par les infirmières. Sentiment de lourdeur abdominale.", score:1},
+         {desc:"A des difficultés à manger en l'absence d'incitations du personnel. Demande ou a besoin de laxatifs, de médicaments intestinaux ou gastriques.", score:2}
+       ]},
+      {n:13, text:"Symptômes somatiques généraux",
+       opts:[
+         {desc:"Aucun.", score:0},
+         {desc:"Lourdeur dans les membres, dans le dos ou la tête. Douleurs dans le dos, céphalées, douleurs musculaires. Perte d'énergie et fatigabilité.", score:1},
+         {desc:"Coter dans le cas où n'importe quel symptôme est net.", score:2}
+       ]},
+      {n:14, text:"Symptômes génitaux", q:"Symptômes tels que : perte de libido, troubles menstruels.",
+       opts:[
+         {desc:"Absents.", score:0},
+         {desc:"Légers.", score:1},
+         {desc:"Graves.", score:2}
+       ]},
+      {n:15, text:"Hypocondrie",
+       opts:[
+         {desc:"Absente.", score:0},
+         {desc:"Attention concentrée sur son propre corps.", score:1},
+         {desc:"Préoccupations sur sa santé.", score:2},
+         {desc:"Plaintes fréquentes, demandes d'aide, etc.", score:3},
+         {desc:"Idées délirantes hypocondriaques.", score:4}
+       ]},
+      {n:16, text:"Perte de poids", q:"Coter soit A (d'après les dires du malade), soit B (appréciation par pesées hebdomadaires par le personnel soignant lorsque des modifications actuelles de poids sont évaluées).",
+       opts:[
+         {desc:"A : pas de perte de poids. — B : moins de 500 g de perte de poids par semaine.", score:0},
+         {desc:"A : perte de poids probable liée à la maladie actuelle. — B : plus de 500 g de perte de poids par semaine.", score:1},
+         {desc:"A : perte de poids certaine (suivant ce que dit le sujet). — B : plus de 1 kg de perte de poids par semaine.", score:2}
+       ]},
+      {n:17, text:"Prise de conscience",
+       opts:[
+         {desc:"Reconnaît qu'il est déprimé et malade.", score:0},
+         {desc:"Reconnaît qu'il est malade, mais l'attribue à la nourriture, au climat, au surmenage, à un virus, à un besoin de repos, etc.", score:1},
+         {desc:"Nie qu'il est malade.", score:2}
+       ]}
+    ],
+    scoring:{
+      totalMax:52,
+      bands:[[0,9,"Pas de dépression (0–9)"],[10,13,"Symptômes légers (10–13)"],[14,17,"Légers à modérés (14–17)"],[18,52,"Modérés à sévères (≥ 18)"]],
+      marks:[10,14,18],
+      details:"Score total = somme des 17 items (0–52). Interprétation usuelle : 10–13 symptômes dépressifs légers ; 14–17 légers à modérés ; ≥ 18 modérés à sévères. Plus la note est élevée, plus la dépression est sévère. L'évaluation est généralement répétée toutes les deux semaines ; certains items (p. ex. travail/activités) peuvent être moins opérants chez les personnes retraitées.",
+      note:"L'échelle de dépression de Hamilton mesure l'intensité des symptômes dépressifs (hétéro-évaluation). Outil d'aide à la passation et au calcul ; il ne pose pas de diagnostic."
+    },
+    references:[
+      "Hamilton M. A rating scale for depression. Journal of Neurology, Neurosurgery and Psychiatry 1960; 23: 56-62.",
+      "Hamilton M. Assessment of change in psychiatric state by means of rating scales. Proceedings of the Royal Society of Medicine 1966; 59 (Suppl. 1): 10-13.",
+      "Hamilton M. Rating depressive patients. Journal of Clinical Psychiatry 1980; 41: 21-24."
+    ],
+    source:"Échelle de dépression de Hamilton (HDRS), M. Hamilton, 1960 — version française à 17 items."
+  }
+];
+const QMAP = {}; REGISTRY.forEach(q=>QMAP[q.id]=q);
+const HOME_PAL = {accent:"#2c7a78",accentD:"#1f5a58",accentL:"#5aa3a0"};
+const isReverse = it => it.scores ? (it.scores[0] < it.scores[3]) : false;
+/* options par item : Y-BOCS définit it.opts=[{label,desc,score}] ; sinon on retombe sur q.opts + it.scores (RAADS) */
+function optList(it,q){ return it.opts ? it.opts : q.opts.map((label,i)=>({label,score:it.scores[i]})); }
+function optScore(it,i){ if(i==null||i<0) return 0; return it.opts ? it.opts[i].score : it.scores[i]; }
+function itemMax(it,q){ const L=optList(it,q); return Math.max.apply(null,L.map(o=>o.score)); }
+function itemCore(it){ return it.core!==false; }
+
+/* ============================================================
+   SESSION (état global)
+   ============================================================ */
+let session = {
+  patient:{nom:"",prenom:"",naissance:"",dateJour:""},
+  current:null,        // qid courant (null = accueil)
+  view:"home"          // "home" | "quest" | "results"
+};
+const STORE = {};      // qid -> {ans:[], comments:[]}
+function ensure(qid){
+  if(!STORE[qid]){
+    const q=QMAP[qid];
+    if(q.kind==='diva'){ STORE[qid]=newDivaState(q); }
+    else { STORE[qid]={ans:new Array(q.items.length).fill(null),comments:new Array(q.items.length).fill("")}; }
+  }
+  return STORE[qid];
+}
+function ensureAnnex(qid){
+  const d=ensure(qid);
+  if(!d.annex){ d.annex={chk:{}, cibles:{obs:["","","",""],comp:["","","",""],evit:""}}; }
+  return d.annex;
+}
+
+/* ---------- refs ---------- */
+const app=document.getElementById('app');
+const sidebar=document.getElementById('sidebar');
+const modal=document.getElementById('modal');
+const modalbox=document.getElementById('modalbox');
+const toastEl=document.getElementById('toast');
+const fileInput=document.getElementById('fileInput');
+const seg=document.getElementById('seg');
+const patientChip=document.getElementById('patientChip');
+
+/* ---------- utils ---------- */
+function esc(s){return (''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function frDate(iso){ if(!iso)return '—'; const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m?(m[3]+'/'+m[2]+'/'+m[1]):iso; }
+function todayISO(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function safeName(prefix){const p=session.patient; const base=((p.nom||'')+'_'+(p.prenom||'')).replace(/[^A-Za-z0-9_\-]/g,'').slice(0,40)||'patient'; return prefix+'_'+base;}
+function stamp(){const t=new Date();const z=n=>String(n).padStart(2,'0');return t.getFullYear()+'-'+z(t.getMonth()+1)+'-'+z(t.getDate())+'_'+z(t.getHours())+'h'+z(t.getMinutes());}
+function answered(qid){ const q=QMAP[qid]; if(q.kind==='diva') return divaAnswered(qid); return ensure(qid).ans.filter(v=>v!==null).length;}
+function totalCount(qid){ const q=QMAP[qid]; if(q.kind==='diva') return divaTotal(); return q.items.length;}
+function isComplete(qid){return answered(qid)===totalCount(qid);}
+function isStarted(qid){return answered(qid)>0;}
+function initials(){const p=session.patient; const a=(p.nom||'').trim()[0]||''; const b=(p.prenom||'').trim()[0]||''; return (a+b).toUpperCase()||'?';}
+
+const CICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5Z"/></svg>';
+const HOMEICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>';
+
+/* ---------- accent ---------- */
+function applyAccent(pal){
+  const r=document.documentElement.style;
+  r.setProperty('--accent',pal.accent);
+  r.setProperty('--accent-d',pal.accentD);
+  r.setProperty('--accent-l',pal.accentL);
+}
+
+/* ---------- scoring ---------- */
+function computeScores(q){
+  const d=ensure(q.id); let total=0; const sub={}; const nr=[]; const com=[]; const extras=[];
+  q.items.forEach((it,i)=>{
+    const sel=d.ans[i];
+    const sc = sel===null?0:optScore(it,sel);
+    if(itemCore(it)){
+      if(sel===null){ nr.push(it.n); }
+      else { total+=sc; if(it.cat) sub[it.cat]=(sub[it.cat]||0)+sc; }
+    } else {
+      extras.push({n:it.n,text:it.text,sel,score:sc,max:itemMax(it,q),label: sel===null?null:optList(it,q)[sel].label});
+    }
+    if(d.comments[i] && d.comments[i].trim()) com.push(it.n);
+  });
+  return {total,sub,nr,com,extras};
+}
+function band(q,t){const B=q.scoring.bands;for(let i=0;i<B.length;i++){if(t>=B[i][0]&&t<=B[i][1])return{txt:B[i][2],idx:i};}return{txt:'—',idx:0};}
+function bandClass(q,idx){const n=q.scoring.bands.length; const r=idx/(n-1||1); if(r<=0.18)return 'b0'; if(r<=0.5)return 'b1'; if(r<=0.72)return 'b2'; return 'b3';}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function goHome(){ session.current=null; session.view="home"; applyAccent(HOME_PAL); closeNav(); render(); }
+function openQuestionnaire(qid){
+  session.current=qid; ensure(qid);
+  const q=QMAP[qid];
+  const fv = q.kind==='diva' ? 'at' : (q.annexes ? 'annexes' : 'quest');
+  const validViews = tabsFor(q).map(t=>t.v);
+  if(!isStarted(qid)) session.view=fv;
+  else if(!validViews.includes(session.view)) session.view=fv;
+  applyAccent(q.palette); closeNav(); render();
+}
+function setView(v){ session.view=v; render(); }
+
+/* ---------- chrome (topbar + sidebar) ---------- */
+function refreshChrome(){
+  // patient chip
+  const p=session.patient; const has=(p.nom||p.prenom);
+  patientChip.classList.toggle('empty',!has);
+  document.getElementById('pAv').textContent=has?initials():'?';
+  document.getElementById('pWho').textContent=has?((p.nom||'').toUpperCase()+' '+(p.prenom||'')).trim():'Aucun patient';
+  document.getElementById('pDob').textContent=p.naissance?('· '+frDate(p.naissance)):'';
+
+  // segmented toggle (dynamique)
+  if(session.current && session.view!=="home"){
+    const tabs=tabsFor(QMAP[session.current]);
+    seg.style.display='inline-flex';
+    seg.innerHTML=tabs.map(t=>'<button data-v="'+t.v+'"'+(session.view===t.v?' class="on"':'')+'>'+esc(t.label)+'</button>').join('');
+  } else { seg.style.display='none'; seg.innerHTML=''; }
+
+  // popover scope labels
+  const qLabel = session.current ? QMAP[session.current].title : '—';
+  document.getElementById('saveQLab').textContent = session.current ? ('Progression de '+qLabel) : 'Ouvrez un questionnaire d\'abord';
+  document.getElementById('pdfQLab').textContent  = session.current ? ('Cotation de '+qLabel) : 'Ouvrez un questionnaire d\'abord';
+  const isDiva = session.current && QMAP[session.current].kind==='diva';
+  document.getElementById('pdfDivaFull').style.display = isDiva ? '' : 'none';
+
+  renderSidebar();
+}
+
+function renderSidebar(){
+  let h='<button class="sb-link home-link'+(session.view==='home'?' active':'')+'" id="sbHome">'+HOMEICON+'<span class="lab"><span class="nm">Accueil</span></span></button>';
+  h+='<div class="sb-h sb-h-main">Questionnaires</div>';
+  // regroupement par catégorie (ordre d'apparition)
+  const cats=[], byCat={};
+  REGISTRY.forEach(q=>{ const c=q.category||'Autres'; if(!byCat[c]){byCat[c]=[];cats.push(c);} byCat[c].push(q); });
+  cats.forEach(cat=>{
+    h+='<div class="sb-h sb-cat">'+esc(cat)+'</div>';
+    byCat[cat].forEach(q=>{
+      const a=answered(q.id), n=totalCount(q.id), done=isComplete(q.id), started=isStarted(q.id);
+      const st = done?('Terminé · '+n+'/'+n) : (started?('En cours · '+a+'/'+n):'');
+      const active = session.current===q.id && session.view!=='home';
+      h+='<button class="sb-link'+(active?' active':'')+'" data-q="'+q.id+'" style="--qc:'+q.palette.accent+'">'
+        +'<span class="dot"></span>'
+        +'<span class="lab"><span class="nm">'+esc(q.title)+'</span>'+(st?'<span class="st">'+st+'</span>':'')+'</span>'
+        +(done?'<span class="chk">&#10003;</span>':'')
+        +'</button>';
+    });
+  });
+  h+='<div class="sb-foot">Tout reste dans ce navigateur — aucune donnée n\'est envoyée. Pensez à enregistrer (.json) ou éditer le PDF avant de fermer.</div>';
+  sidebar.innerHTML=h;
+  document.getElementById('sbHome').onclick=goHome;
+  sidebar.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>openQuestionnaire(b.dataset.q));
+}
+
+/* ---------- onglets selon le type de questionnaire ---------- */
+function tabsFor(q){
+  if(q.kind==='diva') return [{v:'at',label:'Attention'},{v:'hi',label:'Hyperactivité / Impulsivité'},{v:'fn',label:'Fonctionnement'},{v:'results',label:'Cotation'}];
+  if(q.annexes) return [{v:'annexes',label:'Annexes'},{v:'quest',label:'Questionnaire'},{v:'results',label:'Cotation'}];
+  return [{v:'quest',label:'Questionnaire'},{v:'results',label:'Cotation'}];
+}
+
+/* ---------- dispatcher ---------- */
+function render(){
+  window.scrollTo(0,0);
+  refreshChrome();
+  if(session.view==="home") return renderHome();
+  const q=QMAP[session.current];
+  if(q && q.kind==='diva'){
+    if(session.view==='at') return renderDivaSymptoms(q,'AT');
+    if(session.view==='hi') return renderDivaSymptoms(q,'HI');
+    if(session.view==='fn') return renderDivaFunc(q);
+    if(session.view==='results') return renderResults(q);
+    return renderDivaSymptoms(q,'AT');
+  }
+  if(session.view==="annexes") return renderAnnexes(q);
+  if(session.view==="results") return renderResults(q);
+  return renderQuest(q);
+}
+
+/* ============================================================
+   ACCUEIL
+   ============================================================ */
+function renderHome(){
+  const p=session.patient;
+  const anyStarted = REGISTRY.some(q=>isStarted(q.id));
+  let synth='';
+  if(anyStarted){
+    synth='<div class="card"><h2>Synthèse de la session</h2><p class="muted" style="margin-bottom:12px">Cliquez un questionnaire pour l\'ouvrir ou le poursuivre.</p><div class="synth">';
+    REGISTRY.forEach(q=>{
+      const a=answered(q.id),n=totalCount(q.id),done=isComplete(q.id),started=isStarted(q.id);
+      let scoreTxt='', badge;
+      if(done){
+        if(q.kind==='diva'){ const c=divaCounts(q); scoreTxt='<span class="ssc" style="font-size:13px">A '+c.aAdult+'/9 · H/I '+c.hiAdult+'/9</span>'; }
+        else { const s=computeScores(q); scoreTxt='<span class="ssc">'+s.total+' / '+q.scoring.totalMax+'</span>'; }
+        badge='<span class="badge done">Terminé</span>';
+      }
+      else if(started){ scoreTxt=''; badge='<span class="badge doing">'+a+'/'+n+'</span>'; }
+      else { badge='<span class="badge todo">À faire</span>'; }
+      synth+='<div class="srow" data-q="'+q.id+'" style="--qc:'+q.palette.accent+'">'
+        +'<span class="sd"></span>'
+        +'<span><span class="snm">'+esc(q.title)+'</span><br><span class="sst">'+esc(q.subtitle||'')+'</span></span>'
+        +scoreTxt+badge+'</div>';
+    });
+    synth+='</div></div>';
+  }
+
+  const firstTarget = (REGISTRY.find(q=>!isComplete(q.id))||REGISTRY[0]).id;
+
+  app.innerHTML='<div class="masthead">'
+    +'<div class="kicker">Passation soignante</div>'
+    +'<h1>Hétéro-questionnaires</h1>'
+    +'<div class="rule"></div>'
+    +'<p class="lead">Renseignez le patient, puis ouvrez un questionnaire dans le panneau de gauche.</p></div>'
+    +'<div class="note">Page à usage interne. Tout est calculé localement dans votre navigateur — aucune donnée n\'est envoyée. Les réponses ne sont pas conservées après fermeture : enregistrez la session (.json) ou éditez le PDF pour les garder.</div>'
+    +'<div class="card"><h2>Identité du patient</h2>'
+    +'<p class="muted" style="margin-bottom:10px">Commune à tous les questionnaires de la session. Apparaît en tête des cotations.</p>'
+    +'<div class="row2">'
+    +'<div class="field"><label for="nom">Nom</label><input id="nom" type="text" autocomplete="off" value="'+esc(p.nom)+'"></div>'
+    +'<div class="field"><label for="prenom">Prénom</label><input id="prenom" type="text" autocomplete="off" value="'+esc(p.prenom)+'"></div>'
+    +'</div><div class="row2">'
+    +'<div class="field"><label for="naissance">Date de naissance</label><input id="naissance" type="date" value="'+esc(p.naissance)+'"></div>'
+    +'<div class="field"><label for="dateJour">Date de passation</label><input id="dateJour" type="date" value="'+esc(p.dateJour)+'"></div>'
+    +'</div>'
+    +'<div style="margin-top:16px"><button class="bigstart" id="startBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Commencer un questionnaire</button></div>'
+    +'</div>'
+    +synth;
+
+  if(!session.patient.dateJour){ session.patient.dateJour=todayISO(); document.getElementById('dateJour').value=session.patient.dateJour; }
+  ['nom','prenom','naissance','dateJour'].forEach(k=>document.getElementById(k).addEventListener('input',e=>{session.patient[k]=e.target.value; refreshChrome();}));
+  document.getElementById('startBtn').onclick=()=>openQuestionnaire(firstTarget);
+  app.querySelectorAll('.srow').forEach(r=>r.onclick=()=>openQuestionnaire(r.dataset.q));
+}
+
+/* ============================================================
+   QUESTIONNAIRE (passation)
+   ============================================================ */
+function questMasthead(q){
+  return '<div class="masthead">'
+    +'<div class="kicker">Hétéro-questionnaire · passation</div>'
+    +'<h1>'+esc(q.title)+'</h1>'
+    +(q.subtitle?'<div class="subtitle">'+esc(q.subtitle)+'</div>':'')
+    +'<div class="rule"></div>'
+    +(q.lead?'<p class="lead">'+esc(q.lead)+'</p>':'')+'</div>';
+}
+function questActions(){
+  return '<div class="actions">'
+    +'<button class="btn danger" id="reset">Réinitialiser ce questionnaire</button>'
+    +'<span class="spacer"></span>'
+    +'<button class="btn" id="submit">Coter les réponses</button>'
+    +'</div>';
+}
+function wireQuestActions(q){
+  app.querySelectorAll('.cbtn').forEach(b=>b.onclick=()=>toggleComment(q,b));
+  document.getElementById('submit').onclick=()=>trySubmit(q);
+  document.getElementById('reset').onclick=()=>confirmReset(q);
+}
+
+function renderQuest(q){
+  if(q.layout==='blocks') return renderQuestBlocks(q);
+  const d=ensure(q.id);
+  let head='<tr><th></th><th class="h-item">Items</th>';
+  q.opts.forEach(o=>head+='<th>'+esc(o)+'</th>');
+  head+='<th></th></tr>';
+  let rows='';
+  q.items.forEach((it,i)=>{
+    let cells='';
+    q.opts.forEach((o,ci)=>{
+      cells+='<td class="likcell"><label class="cellradio"><input type="radio" name="q_'+i+'" value="'+ci+'"'+(d.ans[i]===ci?' checked':'')+'><span class="tick"></span></label></td>';
+    });
+    const has=d.comments[i]&&d.comments[i].trim()?' has':'';
+    rows+='<tr class="qrow" data-i="'+i+'"><td class="itemnum">'+it.n+'</td><td class="itemtxt">'+esc(it.text)+'</td>'+cells+'<td class="cmtcell"><button class="cbtn'+has+'" data-ci="'+i+'" title="Note clinique (facultative)" aria-label="Note">'+CICON+'</button></td></tr>';
+  });
+
+  app.innerHTML=questMasthead(q)
+    +'<div class="card">'
+    +'<div class="qhead"><div class="insn">'+esc(q.instructions||'')+'</div></div>'
+    +'<div class="tblwrap"><table class="likert"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'
+    +questActions()+'</div>';
+
+  const tbody=app.querySelector('.likert tbody');
+  tbody.addEventListener('click',e=>{
+    const lab=e.target.closest('label.cellradio'); if(!lab)return;
+    e.preventDefault();
+    const inp=lab.querySelector('input'); const tr=lab.closest('tr.qrow'); const i=+tr.dataset.i;
+    const was=d.ans[i]===+inp.value;
+    tbody.querySelectorAll('input[name="q_'+i+'"]').forEach(r=>r.checked=false);
+    if(was){ d.ans[i]=null; } else { inp.checked=true; d.ans[i]=+inp.value; tr.classList.remove('miss'); }
+    refreshChrome();
+  });
+  wireQuestActions(q);
+}
+
+/* ---------- layout "blocs" (chaque item a ses propres réponses ancrées : Y-BOCS) ---------- */
+function renderQuestBlocks(q){
+  const d=ensure(q.id);
+  let body='';
+  let lastGrp=null;
+  q.items.forEach((it,i)=>{
+    if(q.groups && it.grp && it.grp!==lastGrp){
+      const g=q.groups[it.grp]; lastGrp=it.grp;
+      body+='<div class="qsection"><h3>'+esc(g.label)+'</h3>'+(g.note?'<p class="snote">'+esc(g.note)+'</p>':'')+'</div>';
+    }
+    const L=optList(it,q); const mx=itemMax(it,q);
+    const has=d.comments[i]&&d.comments[i].trim()?' has':'';
+    let opts='';
+    L.forEach((o,idx)=>{
+      opts+='<label class="opt"><input type="radio" name="q_'+i+'" value="'+idx+'"'+(d.ans[i]===idx?' checked':'')+'>'
+        +'<span class="optmark"></span>'
+        +'<span class="obody"><span class="oscore">'+o.score+'</span>'
+        +'<span class="otext">'+(o.label?'<span class="olabel">'+esc(o.label)+'</span>':'')+(o.desc?'<span class="odesc">'+esc(o.desc)+'</span>':'')+'</span></span></label>';
+    });
+    body+='<div class="qitem" data-i="'+i+'">'
+      +'<div class="qitem-head"><span class="qnum">'+it.n+'</span>'
+      +'<span class="qtitle"><span class="qname">'+esc(it.text)+'</span><span class="qrange">0–'+mx+'</span></span>'
+      +'<button class="cbtn'+has+'" data-ci="'+i+'" title="Note clinique (facultative)" aria-label="Note">'+CICON+'</button></div>'
+      +(it.q?'<div class="qprompt">'+esc(it.q)+'</div>':'')
+      +'<div class="optlist">'+opts+'</div></div>';
+  });
+
+  app.innerHTML=questMasthead(q)
+    +(q.consignesHTML?'<div class="card consignes">'+q.consignesHTML+'</div>':'')
+    +body
+    +questActions();
+
+  app.querySelectorAll('.qitem').forEach(block=>{
+    const i=+block.dataset.i;
+    block.querySelector('.optlist').addEventListener('click',e=>{
+      const lab=e.target.closest('label.opt'); if(!lab)return;
+      e.preventDefault();
+      const inp=lab.querySelector('input'); const was=d.ans[i]===+inp.value;
+      block.querySelectorAll('input[name="q_'+i+'"]').forEach(r=>r.checked=false);
+      if(was){ d.ans[i]=null; } else { inp.checked=true; d.ans[i]=+inp.value; block.classList.remove('miss'); }
+      refreshChrome();
+    });
+  });
+  wireQuestActions(q);
+}
+
+/* ---------- ANNEXES (préambule : check-list + symptômes-cibles) ---------- */
+function chkRow(key,label,ann,isCat){
+  const s=ann.chk[key]||{}; const hasC=s.c&&s.c.trim();
+  return '<div class="chk-row'+(isCat?' cat':'')+'" data-k="'+key+'">'
+    +'<span class="chk-lab">'+esc(label)+'</span>'
+    +'<span class="cks">'
+    +'<button class="ck a'+(s.a?' on':'')+'" data-f="a">Actuelle</button>'
+    +'<button class="ck p'+(s.p?' on':'')+'" data-f="p">Passée</button>'
+    +'<button class="cbtn'+(hasC?' has':'')+'" data-f="c" title="Commentaire" aria-label="Commentaire">'+CICON+'</button>'
+    +'</span></div>'
+    +(hasC?'<div class="chk-cmt" data-for="'+key+'"><textarea rows="1" placeholder="Précisez…">'+esc(s.c)+'</textarea></div>':'');
+}
+function chkBlock(prefix,groups,ann){
+  let h='';
+  groups.forEach((g,gi)=>{
+    if(g.items && g.items.length){
+      h+='<div class="chk-cat-h">'+esc(g.cat)+'</div>';
+      g.items.forEach((it,ii)=>{ h+=chkRow(prefix+gi+'_'+ii,it,ann,false); });
+    } else {
+      h+=chkRow(prefix+gi+'_h',g.cat,ann,true);
+    }
+  });
+  return h;
+}
+function renderAnnexes(q){
+  const ann=ensureAnnex(q.id); const A=q.annexes;
+  let h=questMasthead(q).replace('Hétéro-questionnaire · passation','Annexes · préambule');
+  if(A.intro) h+='<div class="note">'+esc(A.intro)+'</div>';
+
+  // Annexe 1
+  h+='<div class="card"><h2>Annexe 1 — Liste des obsessions et compulsions</h2>'
+    +'<p class="muted" style="margin-bottom:6px">Pour chaque symptôme présent, cochez <strong>Actuelle</strong> et/ou <strong>Passée</strong>. Le bouton note permet d\'ajouter une précision.</p>'
+    +'<div class="chk-sec"><div class="chk-sec-h">Obsessions</div>'+chkBlock('o',A.checklist.obsessions,ann)+'</div>'
+    +'<div class="chk-sec"><div class="chk-sec-h">Compulsions</div>'+chkBlock('c',A.checklist.compulsions,ann)+'</div>'
+    +'</div>';
+
+  // Annexe 2
+  const cibField=(grp,i,val)=>'<div class="cib-row"><label>Problème '+(i+1)+'</label><input type="text" data-cg="'+grp+'" data-ci="'+i+'" value="'+esc(val||'')+'"></div>';
+  h+='<div class="card"><h2>Annexe 2 — Symptômes cibles</h2>'
+    +'<p class="muted" style="margin-bottom:10px">Symptômes retenus comme cibles de l\'entretien et du suivi.</p>'
+    +'<div class="cib-grp"><div class="cib-h">Obsessions</div>'+[0,1,2,3].map(i=>cibField('obs',i,ann.cibles.obs[i])).join('')+'</div>'
+    +'<div class="cib-grp"><div class="cib-h">Compulsions</div>'+[0,1,2,3].map(i=>cibField('comp',i,ann.cibles.comp[i])).join('')+'</div>'
+    +'<div class="cib-grp"><div class="cib-h">Évitement</div><textarea id="cibEvit" rows="3" placeholder="Conduites d\'évitement…">'+esc(ann.cibles.evit||'')+'</textarea></div>'
+    +'</div>';
+
+  h+='<div class="actions"><span class="spacer"></span><button class="btn" id="toQuest">Passer au questionnaire &#8594;</button></div>';
+  app.innerHTML=h;
+
+  // wiring check-list (délégation)
+  app.querySelectorAll('.chk-sec').forEach(sec=>{
+    sec.addEventListener('click',e=>{
+      const btn=e.target.closest('button'); if(!btn)return;
+      const row=btn.closest('.chk-row'); if(!row)return;
+      const key=row.dataset.k, f=btn.dataset.f;
+      if(!ann.chk[key]) ann.chk[key]={a:false,p:false,c:""};
+      const s=ann.chk[key];
+      if(f==='a'||f==='p'){ s[f]=!s[f]; btn.classList.toggle('on',s[f]); }
+      else if(f==='c'){
+        let box=row.nextElementSibling;
+        if(box && box.classList.contains('chk-cmt')){ box.remove(); }
+        else {
+          box=document.createElement('div'); box.className='chk-cmt'; box.dataset.for=key;
+          box.innerHTML='<textarea rows="1" placeholder="Précisez…"></textarea>';
+          row.after(box);
+          const ta=box.querySelector('textarea'); ta.value=s.c||''; ta.focus();
+          ta.addEventListener('input',()=>{ s.c=ta.value; btn.classList.toggle('has',!!ta.value.trim()); });
+        }
+      }
+    });
+    sec.querySelectorAll('.chk-cmt').forEach(box=>{
+      const key=box.dataset.for; const ta=box.querySelector('textarea');
+      ta.addEventListener('input',()=>{ if(!ann.chk[key])ann.chk[key]={a:false,p:false,c:""}; ann.chk[key].c=ta.value;
+        const b=app.querySelector('.chk-row[data-k="'+key+'"] .cbtn'); if(b)b.classList.toggle('has',!!ta.value.trim()); });
+    });
+  });
+
+  // wiring symptômes-cibles
+  app.querySelectorAll('input[data-cg]').forEach(inp=>{
+    inp.addEventListener('input',()=>{ ann.cibles[inp.dataset.cg][+inp.dataset.ci]=inp.value; });
+  });
+  const ev=document.getElementById('cibEvit'); if(ev) ev.addEventListener('input',()=>{ ann.cibles.evit=ev.value; });
+  document.getElementById('toQuest').onclick=()=>setView('quest');
+}
+
+function toggleComment(q,btn){
+  const d=ensure(q.id);
+  const block=btn.closest('.qitem');
+  if(block){ // layout blocs
+    const i=+btn.dataset.ci;
+    const ex=block.querySelector('.cmtbox');
+    if(ex){ ex.remove(); return; }
+    const box=document.createElement('div'); box.className='cmtbox';
+    box.innerHTML='<label>Note clinique (facultative)</label><textarea rows="2"></textarea>';
+    block.appendChild(box);
+    const ta=box.querySelector('textarea'); ta.value=d.comments[i]||''; ta.focus();
+    ta.addEventListener('input',()=>{ d.comments[i]=ta.value; btn.classList.toggle('has', !!ta.value.trim()); });
+    return;
+  }
+  const tr=btn.closest('tr.qrow'); const i=+btn.dataset.ci;
+  const next=tr.nextElementSibling;
+  if(next && next.classList.contains('cmtrow')){ next.remove(); return; }
+  const ncol=tr.children.length;
+  const crow=document.createElement('tr'); crow.className='cmtrow';
+  crow.innerHTML='<td colspan="'+ncol+'"><div class="cmtbox"><label>Note clinique (facultative)</label><textarea rows="2"></textarea></div></td>';
+  tr.after(crow);
+  const ta=crow.querySelector('textarea');
+  ta.value=d.comments[i]||'';
+  ta.focus();
+  ta.addEventListener('input',()=>{ d.comments[i]=ta.value; btn.classList.toggle('has', !!ta.value.trim()); });
+}
+
+function missingNums(q){const d=ensure(q.id);const a=[];d.ans.forEach((v,i)=>{if(v===null)a.push(q.items[i].n);});return a;}
+function trySubmit(q){
+  const miss=missingNums(q);
+  if(miss.length===0){ setView("results"); return; }
+  showModal('<h2>Réponses incomplètes</h2>'
+    +'<p>'+miss.length+' item(s) sans réponse. Vous pouvez revenir les compléter, ou afficher la cotation maintenant (les items sans réponse seront comptés 0).</p>'
+    +'<div class="mf"><button class="btn ghost" id="msee">Voir les items manquants</button><button class="btn" id="mgo">Coter quand même</button></div>');
+  document.getElementById('mgo').onclick=()=>{ closeModal(); setView("results"); };
+  document.getElementById('msee').onclick=()=>{
+    closeModal();
+    ensure(q.id).ans.forEach((v,i)=>{ if(v===null){ const c=app.querySelector('[data-i="'+i+'"]'); if(c)c.classList.add('miss'); } });
+    showFlash('Items sans réponse surlignés ci-dessous : n° '+miss.join(', ')+'.');
+    const f=app.querySelector('.qrow.miss, .qitem.miss'); if(f)f.scrollIntoView({behavior:'smooth',block:'center'});
+  };
+}
+function confirmReset(q){
+  showModal('<h2>Réinitialiser '+esc(q.title)+' ?</h2>'
+    +'<p>Toutes les réponses et notes de ce questionnaire seront effacées. L\'identité du patient et les autres questionnaires sont conservés.</p>'
+    +'<div class="mf"><button class="btn ghost" id="rno">Annuler</button><button class="btn danger" id="ryes">Tout effacer</button></div>');
+  document.getElementById('rno').onclick=closeModal;
+  document.getElementById('ryes').onclick=()=>{ closeModal(); delete STORE[q.id]; ensure(q.id); setView("quest"); };
+}
+function showFlash(msg){
+  let b=document.getElementById('flash');
+  if(!b){ b=document.createElement('div'); b.id='flash'; b.className='flash no-print';
+    const mh=app.querySelector('.masthead');
+    if(mh) mh.after(b); else app.insertBefore(b,app.firstChild);
+  }
+  b.textContent=msg;
+}
+
+/* ============================================================
+   DIVA-5 (module dédié)
+   ============================================================ */
+function newDivaState(q){
+  const symp={};
+  q.attention.concat(q.hyper).forEach(it=>{ symp[it.id]={a:null,c:null,aex:{},cex:{},aoth:"",coth:"",note:""}; });
+  return { symp, func:{
+    onset:null, onsetAge:"",
+    cdom:{}, impairAdult:null, impairChild:null,
+    critE:null, critEwhich:"",
+    collat:{parent:"",partner:"",school:""}, collatParentWho:"", collatPartnerWho:"",
+    dx:"", remission:false, severity:"", notes:""
+  }};
+}
+function divaItems(q){ return q.attention.concat(q.hyper); }
+function divaAnswered(qid){
+  const q=QMAP[qid], d=ensure(qid); let n=0;
+  divaItems(q).forEach(it=>{ const s=d.symp[it.id]; if(s){ if(s.a!==null)n++; if(s.c!==null)n++; } });
+  const f=d.func; [f.onset,f.impairAdult,f.impairChild].forEach(v=>{ if(v!==null&&v!=='') n++; });
+  return n;
+}
+function divaTotal(){ return 18*2 + 3; }
+function divaCounts(q){
+  const d=ensure(q.id);
+  const cnt=(arr,k)=>arr.reduce((s,it)=>s+(d.symp[it.id]&&d.symp[it.id][k]===true?1:0),0);
+  return { aAdult:cnt(q.attention,'a'), aChild:cnt(q.attention,'c'), hiAdult:cnt(q.hyper,'a'), hiChild:cnt(q.hyper,'c') };
+}
+function divaPresentation(c){
+  const aA=c.aAdult>=5, hiA=c.hiAdult>=5;
+  if(aA&&hiA) return {k:'comb',code:'314.01',label:'Présentation combinée'};
+  if(aA&&!hiA) return {k:'inatt',code:'314.00',label:'Présentation inattentive prédominante'};
+  if(!aA&&hiA) return {k:'hyper',code:'314.01',label:'Présentation hyperactive / impulsive prédominante'};
+  return null;
+}
+
+/* ---- passation : sections symptômes (Attention / Hyperactivité-Impulsivité) ---- */
+function divaSectionMasthead(q,title){
+  return '<div class="masthead"><div class="kicker">DIVA-5 · passation</div><h1>'+esc(title)+'</h1>'
+    +'<div class="subtitle">'+esc(q.subtitle)+'</div><div class="rule"></div></div>';
+}
+function exList(prefix,arr,state,bagName){
+  let h='<div class="exlist">';
+  arr.forEach((t,i)=>{ const on=state[bagName]&&state[bagName][i]; h+='<button class="exrow'+(on?' on':'')+'" data-ex="'+prefix+'" data-i="'+i+'"><span class="exck"></span><span class="exlb">'+esc(t)+'</span></button>'; });
+  h+='</div>';
+  return h;
+}
+function ynToggle(grp,val){
+  return '<div class="yn" data-yn="'+grp+'">'
+    +'<button class="ynb oui'+(val===true?' on':'')+'" data-v="1">Oui</button>'
+    +'<button class="ynb non'+(val===false?' on':'')+'" data-v="0">Non</button></div>';
+}
+function renderDivaSymptoms(q,key){
+  const d=ensure(q.id);
+  const items = key==='AT'?q.attention:q.hyper;
+  const title = key==='AT'?'Section 1 — Symptômes de déficit attentionnel':'Section 2 — Symptômes d\'hyperactivité / impulsivité';
+  let h=divaSectionMasthead(q,title);
+  h+='<div class="card consignes">'+q.consignes[key]+'</div>';
+  h+='<div class="note">Pour chaque critère : cotez « Présent ? » <strong>à l\'âge adulte</strong> et <strong>dans l\'enfance</strong>. Les exemples sont des aides facultatives.</div>';
+  items.forEach(it=>{
+    const s=d.symp[it.id];
+    h+='<div class="qitem diva" data-id="'+it.id+'">'
+      +'<div class="qitem-head"><span class="qnum">'+esc(it.label)+'</span>'
+      +'<span class="qtitle"><span class="qname">'+esc(it.q)+'</span></span>'
+      +'<button class="cbtn'+((s.note&&s.note.trim())?' has':'')+'" data-note title="Note clinique">'+CICON+'</button></div>';
+    if(it.note) h+='<div class="exnote">'+esc(it.note)+'</div>';
+    h+='<div class="divacols">'
+      +'<div class="divacol"><div class="divacol-h">Exemples à l\'âge adulte</div>'+exList('a',it.adultEx,s,'aex')
+      +'<div class="exother"><label>Autre</label><input type="text" data-oth="a" value="'+esc(s.aoth||'')+'" placeholder="Autre exemple…"></div>'
+      +'<div class="ynrow"><span>Symptôme présent à l\'âge adulte&#8239;:</span>'+ynToggle('a',s.a)+'</div></div>'
+      +'<div class="divacol"><div class="divacol-h">Exemples pendant l\'enfance</div>'+exList('c',it.childEx,s,'cex')
+      +'<div class="exother"><label>Autre</label><input type="text" data-oth="c" value="'+esc(s.coth||'')+'" placeholder="Autre exemple…"></div>'
+      +'<div class="ynrow"><span>Symptôme présent dans l\'enfance&#8239;:</span>'+ynToggle('c',s.c)+'</div></div>'
+      +'</div></div>';
+  });
+  const prevBtn = key==='HI' ? '<button class="btn ghost" id="divaPrev">&#8592; Attention</button>' : '';
+  const nextBtn = key==='AT' ? '<button class="btn" id="divaNext">Section suivante &#8594;</button>' : '<button class="btn" id="divaNext">Fonctionnement &#8594;</button>';
+  h+='<div class="actions">'+prevBtn+'<span class="spacer"></span>'+nextBtn+'</div>';
+  app.innerHTML=h;
+
+  app.querySelectorAll('.qitem.diva').forEach(block=>{
+    const it=items.find(x=>x.id===block.dataset.id); const s=d.symp[it.id];
+    block.addEventListener('click',e=>{
+      const ex=e.target.closest('.exrow');
+      if(ex){ const bag=ex.dataset.ex==='a'?'aex':'cex'; const i=+ex.dataset.i; s[bag][i]=!s[bag][i]; ex.classList.toggle('on',!!s[bag][i]); return; }
+      const yn=e.target.closest('.ynb');
+      if(yn){ const grp=yn.closest('.yn').dataset.yn; const val=yn.dataset.v==='1'; const cur=(grp==='a'?s.a:s.c);
+        const nv=(cur===val)?null:val; if(grp==='a')s.a=nv; else s.c=nv;
+        yn.closest('.yn').querySelectorAll('.ynb').forEach(b=>b.classList.remove('on'));
+        if(nv!==null) yn.classList.add('on'); refreshChrome(); return; }
+      const nb=e.target.closest('[data-note]');
+      if(nb){ const ex2=block.querySelector('.cmtbox'); if(ex2){ex2.remove();return;}
+        const box=document.createElement('div'); box.className='cmtbox';
+        box.innerHTML='<label>Note clinique (facultative)</label><textarea rows="2"></textarea>';
+        block.appendChild(box); const ta=box.querySelector('textarea'); ta.value=s.note||''; ta.focus();
+        ta.addEventListener('input',()=>{ s.note=ta.value; nb.classList.toggle('has',!!ta.value.trim()); }); return; }
+    });
+    block.querySelectorAll('input[data-oth]').forEach(inp=>inp.addEventListener('input',()=>{ if(inp.dataset.oth==='a')s.aoth=inp.value; else s.coth=inp.value; }));
+  });
+  document.getElementById('divaNext').onclick=()=>setView(key==='AT'?'hi':'fn');
+  const pv=document.getElementById('divaPrev'); if(pv) pv.onclick=()=>setView('at');
+}
+
+/* ---- passation : Section 3 fonctionnement (critères B, C, D, E) ---- */
+function domBlock(side,domains,f){
+  let h='';
+  domains.forEach((dom,di)=>{
+    h+='<div class="cdom"><div class="cdom-h">'+esc(dom.name)+'</div><div class="exlist">';
+    dom.ex.forEach((t,i)=>{ const key=side+'_'+di+'_'+i; const on=f.cdom[key]; h+='<button class="exrow'+(on?' on':'')+'" data-cdom="'+key+'"><span class="exck"></span><span class="exlb">'+esc(t)+'</span></button>'; });
+    const ok=side+'_'+di+'_oth';
+    h+='</div><div class="exother"><label>Autre</label><input type="text" data-cdomoth="'+ok+'" value="'+esc(f.cdom[ok]||'')+'" placeholder="Autre…"></div></div>';
+  });
+  return h;
+}
+function renderDivaFunc(q){
+  const d=ensure(q.id); const f=d.func;
+  let h=divaSectionMasthead(q,'Section 3 — Altération du fonctionnement');
+  h+='<div class="card consignes">'+q.consignes.FN+'</div>';
+
+  // Critère B
+  h+='<div class="card"><h2>Critère B — Âge de début</h2>'
+    +'<p class="muted" style="margin-bottom:8px">Avez-vous toujours eu ces symptômes de déficit attentionnel et/ou d\'hyperactivité-impulsivité ?</p>'
+    +'<div class="ynrow"><span>Quelques symptômes étaient présents avant l\'âge de 12 ans&#8239;:</span>'+ynToggle('onset',f.onset)+'</div>'
+    +'<div class="cib-row" id="onsetAgeRow" style="margin-top:10px'+(f.onset===false?'':';display:none')+'"><label>Sinon, début à l\'âge de</label><input type="number" id="onsetAge" min="0" max="99" value="'+esc(f.onsetAge||'')+'" style="max-width:120px"> ans</div>'
+    +'</div>';
+
+  // Critère C — domaines
+  h+='<div class="card"><h2>Critère C — Retentissement par domaine</h2>'
+    +'<p class="muted" style="margin-bottom:8px">Dans quels domaines ces symptômes causent-ils ou ont-ils causé des problèmes ? Cochez les situations rencontrées.</p>'
+    +'<div class="chk-sec-h">À l\'âge adulte</div>'+domBlock('adult',q.domains.adult,f)
+    +'<div class="chk-sec-h" style="margin-top:14px">Dans l\'enfance</div>'+domBlock('child',q.domains.child,f)
+    +'</div>';
+
+  // Critère D — au moins deux domaines
+  h+='<div class="card"><h2>Critère D — Retentissement dans au moins deux domaines</h2>'
+    +'<div class="ynrow"><span>Âge adulte — altération du fonctionnement dans deux domaines au moins&#8239;:</span>'+ynToggle('impA',f.impairAdult)+'</div>'
+    +'<div class="ynrow"><span>Enfance — altération du fonctionnement dans deux domaines au moins&#8239;:</span>'+ynToggle('impC',f.impairChild)+'</div>'
+    +'</div>';
+
+  // Critère E + conclusion
+  h+='<div class="card"><h2>Conclusion diagnostique</h2>'
+    +'<p class="muted" style="margin-bottom:6px">Critère E — les symptômes ne sont pas mieux expliqués par un autre trouble psychiatrique.</p>'
+    +'<div class="ynrow"><span>Critère E rempli (pas mieux expliqué par un autre trouble)&#8239;:</span>'+ynToggle('critE',f.critE)+'</div>'
+    +'<div class="cib-row" style="margin-top:8px"><label>Si non, par&#8239;:</label><input type="text" id="critEwhich" value="'+esc(f.critEwhich||'')+'" placeholder="Autre trouble…"></div>'
+    +'<div class="cib-grp" style="margin-top:14px"><div class="cib-h">Présentation clinique retenue</div>'
+    +'<select id="dxSel" class="divasel"><option value="">— Non posé —</option>'
+    +q.presentations.map(p=>'<option value="'+p.k+'"'+(f.dx===p.k?' selected':'')+'>'+esc(p.label)+' ('+p.code+')</option>').join('')
+    +'</select>'
+    +'<label class="cbx" style="margin-top:8px"><input type="checkbox" id="remiss"'+(f.remission?' checked':'')+'> En rémission partielle</label></div>'
+    +'<div class="cib-grp" style="margin-top:12px"><div class="cib-h">Sévérité</div>'
+    +'<div class="yn wide" data-yn="sev">'+q.severities.map(sv=>'<button class="ynb'+(f.severity===sv.k?' on':'')+'" data-sv="'+sv.k+'">'+esc(sv.label)+'</button>').join('')+'</div></div>'
+    +'</div>';
+
+  // Conclusions générales (texte libre, repris dans le PDF si non vide)
+  h+='<div class="card"><h2>Conclusions générales</h2>'
+    +'<p class="muted" style="margin-bottom:8px">Texte libre : synthèse de l\'entretien, informations collatérales, éléments cliniques. Apparaîtra dans le PDF (omise si laissée vide).</p>'
+    +'<textarea id="divaNotes" rows="5" placeholder="Conclusions de l\'entretien…">'+esc(f.notes||'')+'</textarea></div>';
+
+  h+='<div class="actions"><button class="btn ghost" id="fnPrev">&#8592; Hyperactivité / Impulsivité</button><span class="spacer"></span><button class="btn" id="toCot">Voir la cotation &#8594;</button></div>';
+  app.innerHTML='<div id="divaFnRoot">'+h+'</div>';
+  const root=document.getElementById('divaFnRoot');
+
+  // wiring
+  root.addEventListener('click',function(e){
+    const yn=e.target.closest('.ynb[data-v]');
+    if(yn){ const grp=yn.closest('.yn').dataset.yn; const val=yn.dataset.v==='1';
+      const map={onset:'onset',a:null,impA:'impairAdult',impC:'impairChild',critE:'critE'}; const fld=map[grp]; if(!fld)return;
+      const nv=(f[fld]===val)?null:val; f[fld]=nv;
+      yn.closest('.yn').querySelectorAll('.ynb').forEach(b=>b.classList.remove('on')); if(nv!==null)yn.classList.add('on');
+      if(grp==='onset'){ const r=document.getElementById('onsetAgeRow'); r.style.display=(f.onset===false)?'':'none'; }
+      return;
+    }
+    const sv=e.target.closest('.ynb[data-sv]');
+    if(sv){ const k=sv.dataset.sv; f.severity=(f.severity===k)?'':k;
+      sv.closest('.yn').querySelectorAll('.ynb').forEach(b=>b.classList.remove('on')); if(f.severity)sv.classList.add('on'); return; }
+    const cd=e.target.closest('.exrow[data-cdom]');
+    if(cd){ const k=cd.dataset.cdom; f.cdom[k]=!f.cdom[k]; cd.classList.toggle('on',!!f.cdom[k]); return; }
+  });
+  app.querySelectorAll('input[data-cdomoth]').forEach(inp=>inp.addEventListener('input',()=>{ f.cdom[inp.dataset.cdomoth]=inp.value; }));
+  const oa=document.getElementById('onsetAge'); if(oa) oa.addEventListener('input',()=>f.onsetAge=oa.value);
+  const ce=document.getElementById('critEwhich'); if(ce) ce.addEventListener('input',()=>f.critEwhich=ce.value);
+  const dx=document.getElementById('dxSel'); if(dx) dx.addEventListener('change',()=>f.dx=dx.value);
+  const rm=document.getElementById('remiss'); if(rm) rm.addEventListener('change',()=>f.remission=rm.checked);
+  const nt=document.getElementById('divaNotes'); if(nt) nt.addEventListener('input',()=>f.notes=nt.value);
+  document.getElementById('toCot').onclick=()=>setView('results');
+  document.getElementById('fnPrev').onclick=()=>setView('hi');
+}
+
+/* ---- cotation DIVA ---- */
+function divaResultsHTML(q){
+  const id=session.patient; const d=ensure(q.id); const f=d.func; const c=divaCounts(q);
+  const yn=v=>v===true?'<span class="apa">Oui</span>':(v===false?'<span class="ynno">Non</span>':'<span class="muted">—</span>');
+  const flag=(v,th)=>v>=th?'<span class="pill pos">&#8805; '+th+'</span>':'<span class="pill neg">&lt; '+th+'</span>';
+
+  let html='<div class="masthead small"><div class="kicker">Cotation</div><h1>'+esc(q.title)+'</h1><div class="rule"></div></div>'
+    +'<div class="card"><h2 style="font-size:20px">'+esc(id.nom||'')+' '+esc(id.prenom||'')+'</h2>'
+    +'<div class="hdr-id">'
+    +'<div><span class="k">Date de naissance :</span> '+esc(frDate(id.naissance))+'</div>'
+    +'<div><span class="k">Date de passation :</span> '+esc(frDate(id.dateJour))+'</div>'
+    +'<div><span class="k">Entretien :</span> '+esc(q.title)+' (TDAH, DSM-5)</div>'
+    +'</div></div>';
+
+  // compteurs
+  html+='<div class="card qcard"><h2>Décompte des symptômes</h2><div class="sumgrid">'
+    +'<div class="sumcell"><div class="nm">Déficit attentionnel — âge adulte '+flag(c.aAdult,5)+'</div><div class="v">'+c.aAdult+'<small> / 9</small></div><div class="minibar"><div class="f" style="width:'+(c.aAdult/9*100)+'%"></div></div></div>'
+    +'<div class="sumcell"><div class="nm">Déficit attentionnel — enfance '+flag(c.aChild,6)+'</div><div class="v">'+c.aChild+'<small> / 9</small></div><div class="minibar"><div class="f" style="width:'+(c.aChild/9*100)+'%"></div></div></div>'
+    +'<div class="sumcell"><div class="nm">Hyperactivité / impulsivité — âge adulte '+flag(c.hiAdult,5)+'</div><div class="v">'+c.hiAdult+'<small> / 9</small></div><div class="minibar"><div class="f" style="width:'+(c.hiAdult/9*100)+'%"></div></div></div>'
+    +'<div class="sumcell"><div class="nm">Hyperactivité / impulsivité — enfance '+flag(c.hiChild,6)+'</div><div class="v">'+c.hiChild+'<small> / 9</small></div><div class="minibar"><div class="f" style="width:'+(c.hiChild/9*100)+'%"></div></div></div>'
+    +'</div>';
+  const pres=divaPresentation(c);
+  html+='<div class="nrbox" style="background:var(--tint);border-color:var(--accent-l);color:var(--accent-ink)"><strong>Seuils DSM-5 :</strong> à l\'âge adulte, ≥ 5 symptômes dans un domaine ; dans l\'enfance, ≥ 6 symptômes (plusieurs avant 12 ans pour le critère B). '
+    +'Présentation indicative selon les seuils adultes : '+(pres?('<strong>'+esc(pres.label)+' ('+pres.code+')</strong>'):'<strong>seuil non atteint</strong>')+'. La cotation finale relève du jugement clinique.</div>';
+  html+='</div>';
+
+  // tableau récapitulatif des 18 critères
+  const rowFor=it=>{ const s=d.symp[it.id]; return '<tr><td class="dcrit">'+esc(it.crit)+'</td><td class="dstmt">'+esc(it.label)+'. '+esc(it.stmt)+'</td><td class="dyn">'+yn(s.a)+'</td><td class="dyn">'+yn(s.c)+'</td></tr>'; };
+  html+='<div class="card"><h2>Résumé des symptômes A et H/I</h2>'
+    +'<div class="tblwrap"><table class="dtable"><thead><tr><th>Critère</th><th>Symptôme</th><th>Adulte</th><th>Enfance</th></tr></thead><tbody>'
+    +q.attention.map(rowFor).join('')
+    +'<tr class="dsum"><td></td><td>Nombre de critères de Déficit Attentionnel</td><td class="dyn">'+c.aAdult+' / 9</td><td class="dyn">'+c.aChild+' / 9</td></tr>'
+    +q.hyper.map(rowFor).join('')
+    +'<tr class="dsum"><td></td><td>Nombre de critères d\'Hyperactivité / Impulsivité</td><td class="dyn">'+c.hiAdult+' / 9</td><td class="dyn">'+c.hiChild+' / 9</td></tr>'
+    +'</tbody></table></div></div>';
+
+  // fonctionnement
+  const onsetTxt = f.onset===true?'Oui — quelques symptômes avant l\'âge de 12 ans' : (f.onset===false?('Non — début à l\'âge de '+(f.onsetAge||'—')+' ans'):'—');
+  const domSummary=(side,domains)=>domains.map((dom,di)=>{
+    const chk=dom.ex.map((t,i)=>f.cdom[side+'_'+di+'_'+i]?t:null).filter(Boolean);
+    const oth=f.cdom[side+'_'+di+'_oth']; if(oth&&oth.trim())chk.push(oth.trim());
+    return chk.length?('<div class="sx-row"><div class="sx-l"><span class="sx-cat">'+esc(dom.name)+'</span> '+chk.map(esc).join(' · ')+'</div></div>'):'';
+  }).join('');
+  const adultDom=domSummary('adult',q.domains.adult), childDom=domSummary('child',q.domains.child);
+  html+='<div class="card"><h2>Section 3 — Fonctionnement</h2>'
+    +'<div class="hdr-id" style="margin-bottom:10px">'
+    +'<div><span class="k">Critère B (début avant 12 ans) :</span> '+esc(onsetTxt)+'</div>'
+    +'<div><span class="k">Critère D — adulte (≥ 2 domaines) :</span> '+yn(f.impairAdult)+'</div>'
+    +'<div><span class="k">Critère D — enfance (≥ 2 domaines) :</span> '+yn(f.impairChild)+'</div>'
+    +'<div><span class="k">Critère E (pas mieux expliqué) :</span> '+yn(f.critE)+(f.critE===false&&f.critEwhich?(' — '+esc(f.critEwhich)):'')+'</div>'
+    +'</div>';
+  if(adultDom){ html+='<div class="sx-h">Retentissement — âge adulte</div>'+adultDom; }
+  if(childDom){ html+='<div class="sx-h">Retentissement — enfance</div>'+childDom; }
+  if(!adultDom && !childDom) html+='<p class="muted">Aucun domaine de retentissement coché.</p>';
+  html+='</div>';
+
+  // conclusion
+  const presLabel = f.dx? (q.presentations.find(p=>p.k===f.dx)||{}) : null;
+  const sevLabel = f.severity? (q.severities.find(s=>s.k===f.severity)||{}).label : '';
+  html+='<div class="card"><h2>Conclusion</h2><div class="hdr-id">'
+    +'<div><span class="k">Présentation clinique :</span> '+(presLabel?esc(presLabel.label)+' ('+presLabel.code+')':'<span class="muted">non posée</span>')+(f.remission?' — en rémission partielle':'')+'</div>'
+    +'<div><span class="k">Sévérité :</span> '+(sevLabel?esc(sevLabel):'<span class="muted">—</span>')+'</div>'
+    +'</div>'
+    +'<details><summary>Note méthodologique</summary><div class="interp">DIVA-5 : entretien diagnostique structuré fondé sur les 18 critères du TDAH du DSM-5, évalués à l\'âge adulte et dans l\'enfance. Le diagnostic requiert : un nombre suffisant de symptômes (≥ 5 à l\'âge adulte, ≥ 6 dans l\'enfance par domaine), un début avant 12 ans (critère B), un retentissement dans au moins deux domaines (critères C et D), et l\'absence d\'une meilleure explication par un autre trouble (critère E). Outil d\'aide à la passation ; il ne se substitue pas au jugement clinique.</div></details>'
+    +'</div>';
+  if(f.notes && f.notes.trim()){
+    html+='<div class="card"><h2>Conclusions générales</h2><div class="interp" style="white-space:pre-wrap">'+esc(f.notes.trim())+'</div></div>';
+  }
+  return html;
+}
+
+/* ---- transcription complète DIVA (questionnaire saisi) pour le PDF ---- */
+function divaFullHTML(q){
+  const id=session.patient; const d=ensure(q.id); const f=d.func;
+  const yntag=v=>v===true?'<span class="apa">Présent : Oui</span>':(v===false?'<span class="ynno">Présent : Non</span>':'<span class="muted">Présent : —</span>');
+  const picked=(it,bag,oth)=>{ const s=d.symp[it.id]; const arr=(bag==='aex'?it.adultEx:it.childEx); const list=arr.map((t,i)=>s[bag][i]?t:null).filter(Boolean); const o=s[oth]; if(o&&o.trim())list.push('Autre : '+o.trim()); return list; };
+
+  let html='<div class="masthead small"><div class="kicker">Entretien complet</div><h1>'+esc(q.title)+'</h1><div class="subtitle">'+esc(q.subtitle)+'</div><div class="rule"></div></div>'
+    +'<div class="card"><h2 style="font-size:20px">'+esc(id.nom||'')+' '+esc(id.prenom||'')+'</h2><div class="hdr-id">'
+    +'<div><span class="k">Date de naissance :</span> '+esc(frDate(id.naissance))+'</div>'
+    +'<div><span class="k">Date de passation :</span> '+esc(frDate(id.dateJour))+'</div>'
+    +'</div></div>';
+
+  [['Section 1 — Symptômes de déficit attentionnel',q.attention],['Section 2 — Symptômes d\'hyperactivité / impulsivité',q.hyper]].forEach(pair=>{
+    const title=pair[0], items=pair[1];
+    html+='<div class="card"><h2>'+esc(title)+'</h2>';
+    items.forEach(it=>{
+      const s=d.symp[it.id]; const a=picked(it,'aex','aoth'), c=picked(it,'cex','coth');
+      html+='<div class="qitem"><div class="qitem-head"><span class="qnum" style="width:auto;min-width:26px;padding:0 9px;white-space:nowrap">'+esc(it.label)+'</span>'
+        +'<span class="qtitle"><span class="qname">'+esc(it.q)+'</span></span></div>'
+        +'<div class="fullcols">'
+        +'<div class="fullcol"><div class="fullh">Âge adulte</div>'+yntag(s.a)+(a.length?'<div class="exsum">'+a.map(esc).join(' · ')+'</div>':'')+'</div>'
+        +'<div class="fullcol"><div class="fullh">Enfance</div>'+yntag(s.c)+(c.length?'<div class="exsum">'+c.map(esc).join(' · ')+'</div>':'')+'</div>'
+        +'</div>'
+        +((s.note&&s.note.trim())?'<div class="acom" style="margin-top:8px">Note : '+esc(s.note.trim())+'</div>':'')
+        +'</div>';
+    });
+    html+='</div>';
+  });
+
+  // Section 3 fonctionnement saisi
+  const onsetTxt = f.onset===true?'Oui — quelques symptômes avant l\'âge de 12 ans' : (f.onset===false?('Non — début à l\'âge de '+(f.onsetAge||'—')+' ans'):'—');
+  const yn=v=>v===true?'<span class="apa">Oui</span>':(v===false?'<span class="ynno">Non</span>':'<span class="muted">—</span>');
+  const domSummary=(side,domains)=>domains.map((dom,di)=>{
+    const chk=dom.ex.map((t,i)=>f.cdom[side+'_'+di+'_'+i]?t:null).filter(Boolean);
+    const oth=f.cdom[side+'_'+di+'_oth']; if(oth&&oth.trim())chk.push('Autre : '+oth.trim());
+    return chk.length?('<div class="sx-row"><div class="sx-l"><span class="sx-cat">'+esc(dom.name)+'</span> '+chk.map(esc).join(' · ')+'</div></div>'):'';
+  }).join('');
+  const adultDom=domSummary('adult',q.domains.adult), childDom=domSummary('child',q.domains.child);
+  html+='<div class="card"><h2>Section 3 — Altération du fonctionnement</h2>'
+    +'<div class="hdr-id" style="margin-bottom:6px">'
+    +'<div><span class="k">Critère B (début avant 12 ans) :</span> '+esc(onsetTxt)+'</div>'
+    +'<div><span class="k">Critère D — adulte (≥ 2 domaines) :</span> '+yn(f.impairAdult)+'</div>'
+    +'<div><span class="k">Critère D — enfance (≥ 2 domaines) :</span> '+yn(f.impairChild)+'</div>'
+    +'<div><span class="k">Critère E (pas mieux expliqué) :</span> '+yn(f.critE)+(f.critE===false&&f.critEwhich?(' — '+esc(f.critEwhich)):'')+'</div>'
+    +'</div>';
+  if(adultDom){ html+='<div class="sx-h">Retentissement — âge adulte</div>'+adultDom; }
+  if(childDom){ html+='<div class="sx-h">Retentissement — enfance</div>'+childDom; }
+  if(!adultDom && !childDom) html+='<p class="muted">Aucun domaine de retentissement coché.</p>';
+  html+='</div>';
+  return html;
+}
+
+function printDivaFull(){
+  const q=session.current?QMAP[session.current]:null;
+  if(!q || q.kind!=='diva'){ toast('Ouvrez la DIVA d\'abord.'); return; }
+  const holder=document.createElement('div'); holder.id='printHolder';
+  const s1=document.createElement('section'); s1.className='printq'; s1.innerHTML=divaFullHTML(q); holder.appendChild(s1);
+  const s2=document.createElement('section'); s2.className='printq'; s2.innerHTML=divaResultsHTML(q); holder.appendChild(s2);
+  if(q.references && q.references.length){
+    let refHTML='<div class="refblock"><div class="reftitle">'+esc(q.title)+' — Références</div>';
+    if(q.source) refHTML+='<div class="refsrc">'+esc(q.source)+'</div>';
+    refHTML+='<ol class="reflist">'+q.references.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ol></div>';
+    const rf=document.createElement('section'); rf.className='printrefs'; rf.innerHTML=refHTML; holder.appendChild(rf);
+  }
+  const prevApp=app.innerHTML; const prevTitle=document.title;
+  app.innerHTML=''; app.appendChild(holder);
+  document.title='DIVA_complete_'+safeName('').replace(/^_/,'');
+  closeAllPops(); closeNav();
+  window.print();
+  setTimeout(()=>{ document.title=prevTitle; render(); },600);
+}
+
+/* ============================================================
+   COTATION — HTML réutilisable (écran + PDF)
+   ============================================================ */
+function annexEntries(q){
+  const d=ensure(q.id); const ann=d.annex; if(!ann) return null;
+  const A=q.annexes; const out={obs:[],comp:[]};
+  const scan=(prefix,groups,bucket)=>{
+    groups.forEach((g,gi)=>{
+      if(g.items && g.items.length){
+        g.items.forEach((it,ii)=>{ const s=ann.chk[prefix+gi+'_'+ii]; if(s&&(s.a||s.p||(s.c&&s.c.trim()))) bucket.push({cat:g.cat,label:it,s}); });
+      } else {
+        const s=ann.chk[prefix+gi+'_h']; if(s&&(s.a||s.p||(s.c&&s.c.trim()))) bucket.push({cat:null,label:g.cat,s});
+      }
+    });
+  };
+  scan('o',A.checklist.obsessions,out.obs);
+  scan('c',A.checklist.compulsions,out.comp);
+  out.cibles=ann.cibles;
+  return out;
+}
+function annexesSummaryHTML(q){
+  if(!q.annexes) return '';
+  const e=annexEntries(q); if(!e) return '';
+  const cib=e.cibles||{obs:[],comp:[],evit:""};
+  const hasCib = (cib.obs||[]).concat(cib.comp||[]).some(x=>x&&x.trim()) || (cib.evit&&cib.evit.trim());
+  if(!e.obs.length && !e.comp.length && !hasCib) return '';
+  const tag=s=>'<span class="ap">'+(s.a?'<span class="apa">Actuelle</span>':'')+(s.p?'<span class="app">Passée</span>':'')+'</span>';
+  const rowsOf=arr=>arr.map(x=>'<div class="sx-row"><div class="sx-l">'+(x.cat?'<span class="sx-cat">'+esc(x.cat)+'</span> ':'')+esc(x.label)+'</div>'+tag(x.s)+((x.s.c&&x.s.c.trim())?'<div class="sx-c">'+esc(x.s.c.trim())+'</div>':'')+'</div>').join('');
+  let html='<div class="card"><h2>Annexe 1 — Symptômes relevés</h2>';
+  if(e.obs.length) html+='<div class="sx-h">Obsessions</div>'+rowsOf(e.obs);
+  if(e.comp.length) html+='<div class="sx-h">Compulsions</div>'+rowsOf(e.comp);
+  if(!e.obs.length && !e.comp.length) html+='<p class="muted">Aucun symptôme coché.</p>';
+  html+='</div>';
+  const cibList=arr=>arr.map((v,i)=>(v&&v.trim())?'<li><strong>Problème '+(i+1)+' :</strong> '+esc(v.trim())+'</li>':'').join('');
+  if(hasCib){
+    const ho=cibList(cib.obs||[]), hc=cibList(cib.comp||[]);
+    html+='<div class="card"><h2>Annexe 2 — Symptômes cibles</h2>';
+    if(ho) html+='<div class="sx-h">Obsessions</div><ul class="cibul">'+ho+'</ul>';
+    if(hc) html+='<div class="sx-h">Compulsions</div><ul class="cibul">'+hc+'</ul>';
+    if(cib.evit&&cib.evit.trim()) html+='<div class="sx-h">Évitement</div><p class="cibevit">'+esc(cib.evit.trim())+'</p>';
+    html+='</div>';
+  }
+  return html;
+}
+function resultsHTML(q){
+  const id=session.patient; const S=q.scoring;
+  const {total,sub,nr,com,extras}=computeScores(q);
+  const bd=band(q,total);
+  const pct=Math.max(0,Math.min(100,total/S.totalMax*100));
+  const markPct=v=>Math.max(0,Math.min(100,v/S.totalMax*100));
+
+  let html='<div class="masthead small"><div class="kicker">Cotation</div><h1>'+esc(q.title)+'</h1><div class="rule"></div></div>'
+    +'<div class="card"><h2 style="font-size:20px">'+esc(id.nom||'')+' '+esc(id.prenom||'')+'</h2>'
+    +'<div class="hdr-id">'
+    +'<div><span class="k">Date de naissance :</span> '+esc(frDate(id.naissance))+'</div>'
+    +'<div><span class="k">Date de passation :</span> '+esc(frDate(id.dateJour))+'</div>'
+    +'<div><span class="k">Questionnaire :</span> '+esc(q.title)+' (hétéro)</div>'
+    +'</div></div>';
+
+  html+=annexesSummaryHTML(q);
+
+  html+='<div class="card qcard">'
+    +'<h2>'+esc(q.title)+' — score total</h2>'
+    +'<div class="tot"><span class="big">'+total+'</span><span class="max">/ '+S.totalMax+'</span></div>'
+    +'<div class="band '+bandClass(q,bd.idx)+'">'+esc(bd.txt)+'</div>'
+    +'<div class="gauge"><div class="track"><div class="fill" style="width:'+pct+'%"></div>';
+  (S.marks||[]).forEach(v=>{ html+='<div class="mark" data-l="'+v+'" style="left:'+markPct(v)+'%"></div>'; });
+  html+='</div><div class="ends"><span>0</span><span>'+S.totalMax+'</span></div></div>';
+  if(nr.length)html+='<div class="nrbox"><strong>Items sans réponse</strong> (comptés 0 dans le score) : n° '+nr.join(', ')+'.</div>';
+  if(com.length)html+='<div class="cmbox"><strong>Notes du soignant</strong> : n° '+com.join(', ')+' — voir le détail ci-dessous.</div>';
+
+  if(S.subscales){
+    html+='<div class="sumgrid">';
+    (S.subOrder||Object.keys(S.subscales)).forEach(code=>{
+      const def=S.subscales[code]; const label=def[0],seuil=def[1],mx=def[2]; const v=sub[code]||0;
+      const hasSeuil=(seuil!==null&&seuil!==undefined);
+      const flag=hasSeuil&&v>=seuil;
+      const vp=Math.max(0,Math.min(100,v/mx*100)); const sp=hasSeuil?Math.max(0,Math.min(100,seuil/mx*100)):0;
+      html+='<div class="sumcell '+(flag?'flag':'')+'">'
+        +'<div class="nm">'+esc(label)+' <span style="opacity:.7">('+code+')</span>'+(hasSeuil?(flag?'<span class="pill pos">&#8805; seuil</span>':'<span class="pill neg">&lt; seuil</span>'):'')+'</div>'
+        +'<div class="v">'+v+'<small> / '+mx+'</small></div>'
+        +'<div class="minibar"><div class="f" style="width:'+vp+'%"></div>'+(hasSeuil?'<div class="s" style="left:'+sp+'%"></div>':'')+'</div>'
+        +(hasSeuil?'<div class="muted" style="padding-left:6px;margin-top:14px">Seuil : '+seuil+'</div>':'<div class="muted" style="padding-left:6px;margin-top:14px">Sous-total</div>')
+        +'</div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>'; // close qcard
+
+  /* items additionnels (hors score total) */
+  if(extras && extras.length){
+    html+='<div class="card"><h2>Items additionnels (hors score total)</h2>'
+      +'<p class="muted" style="margin-bottom:12px">Items complémentaires (heuristiques) : non inclus dans le score total Y-BOCS (items 1–10).</p>'
+      +'<div class="sumgrid">';
+    extras.forEach(x=>{
+      const vp = x.max? Math.max(0,Math.min(100,x.score/x.max*100)):0;
+      html+='<div class="sumcell">'
+        +'<div class="nm">'+x.n+'. '+esc(x.text)+'</div>'
+        +'<div class="v">'+(x.sel===null?'—':x.score)+'<small> / '+x.max+'</small></div>'
+        +'<div class="minibar"><div class="f" style="width:'+vp+'%"></div></div>'
+        +'<div class="muted" style="padding-left:6px;margin-top:14px">'+(x.label?esc(x.label):'Sans réponse')+'</div>'
+        +'</div>';
+    });
+    html+='</div></div>';
+  }
+
+  // detail
+  const hasRev=q.items.some(isReverse); const hasExtra=extras&&extras.length;
+  let legend='<span class="lg"><span class="sw" style="background:'+q.palette.accent+'"></span>'+(hasExtra?'Item du score total':'Item standard')+'</span>';
+  if(hasRev) legend+='<span class="lg"><span class="sw" style="background:'+q.palette.accentD+'"></span>'+esc(S.reverseLabel||'Item inversé')+'</span>';
+  if(hasExtra) legend+='<span class="lg"><span class="sw" style="background:'+q.palette.accentL+'"></span>Item additionnel (hors score)</span>';
+  legend+='<span class="lg"><span class="sw" style="background:#d9d4cb"></span>Sans réponse</span>';
+  html+='<div class="card"><h2>Réponses détaillées</h2><div class="legend">'+legend+'</div>';
+  html+='<details open><summary>Afficher / masquer les '+q.items.length+' items</summary><div class="ansrows">';
+  const d=ensure(q.id);
+  q.items.forEach((it,i)=>{
+    const sel=d.ans[i]; const rev=isReverse(it); const add=!itemCore(it); const L=optList(it,q);
+    const cls=sel===null?'nr':(add?'add':(rev?'rev':''));
+    const pts=sel===null?0:optScore(it,sel);
+    let segs='';
+    for(let s=0;s<L.length;s++) segs+='<span class="seg'+(sel===s?' sel':'')+'"></span>';
+    const lab=sel===null?'<span style="color:var(--danger);font-weight:700">Sans réponse</span>':esc(L[sel].label||L[sel].desc||'');
+    const tag = rev?'<span class="tagx">inversé</span>':(add?'<span class="tagx">additionnel</span>':'');
+    const note=(d.comments[i]&&d.comments[i].trim())?'<div class="acom">Note : '+esc(d.comments[i].trim())+'</div>':'';
+    html+='<div class="arow '+cls+'"><div class="anum">'+it.n+'</div>'
+      +'<div class="atext">'+esc(it.text)+tag+'</div>'
+      +'<div class="ascale-wrap ascale '+(sel===null?'nrlbl':'')+'"><div class="segs">'+segs+'</div><div class="lbl">'+lab+'</div></div>'
+      +'<div class="apts p'+pts+'">'+pts+'</div>'+note+'</div>';
+  });
+  html+='</div></details>';
+  if(S.details)html+='<details><summary>Repères d\'interprétation (score total)</summary><div class="interp">'+esc(S.details)+'</div></details>';
+  if(S.subscales)html+='<details><summary>Sous-échelles</summary><div class="interp">'+(S.subOrder||Object.keys(S.subscales)).map(c=>{const def=S.subscales[c];const seuil=def[1];return def[0]+' ('+c+') — '+(seuil!==null&&seuil!==undefined?('seuil '+seuil+' · '):'')+'max '+def[2];}).join('\n')+(S.note?('\n\n'+S.note):'')+'</div></details>';
+  html+='</div>';
+  return html;
+}
+
+function renderResults(q){
+  let html = q.kind==='diva' ? divaResultsHTML(q) : resultsHTML(q);
+  html+='<div class="actions no-print">'
+    +'<button class="btn ghost" id="back">&#8592; Modifier les réponses</button>'
+    +'<span class="spacer"></span>'
+    +'<button class="btn" id="printOne">Imprimer / PDF (ce questionnaire)</button>'
+    +'</div>';
+  app.innerHTML=html;
+  document.getElementById('back').onclick=()=>setView(q.kind==='diva'?'at':'quest');
+  document.getElementById('printOne').onclick=()=>printScope('q');
+}
+
+/* ============================================================
+   ENREGISTRER / REPRENDRE (.json)
+   ============================================================ */
+function download(name,obj){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=name+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function qData(qid){
+  const d=ensure(qid);
+  if(QMAP[qid].kind==='diva') return {diva:JSON.parse(JSON.stringify(d))};
+  const o={ans:d.ans.slice(),comments:d.comments.slice()}; if(d.annex) o.annex=JSON.parse(JSON.stringify(d.annex)); return o;
+}
+function saveQuestionnaire(qid){
+  download(safeName(qid)+'_'+stamp(),{
+    type:"questionnaire",app:"hetero-cmp",version:1,savedAt:new Date().toISOString(),
+    questionnaire:qid,patient:Object.assign({},session.patient),data:qData(qid)
+  });
+  toast('Questionnaire '+QMAP[qid].title+' enregistré (.json)');
+}
+function saveSession(){
+  const data={}; REGISTRY.forEach(q=>{ if(STORE[q.id]) data[q.id]=qData(q.id); });
+  download(safeName('Session')+'_'+stamp(),{
+    type:"session",app:"hetero-cmp",version:1,savedAt:new Date().toISOString(),
+    patient:Object.assign({},session.patient),data:data
+  });
+  toast('Session enregistrée (.json)');
+}
+function resumeFromFile(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let obj; try{ obj=JSON.parse(reader.result); }catch(e){ toast('Fichier illisible : JSON invalide.'); return; }
+    if(!obj||obj.app!=='hetero-cmp'){
+      // tolérant : on tente quand même si la structure ressemble
+      if(!obj || (!obj.data && !obj.questionnaire)){ toast('Fichier non reconnu.'); return; }
+    }
+    if(obj.type==='questionnaire' && obj.questionnaire){
+      const qid=obj.questionnaire;
+      if(!QMAP[qid]){ toast('Questionnaire « '+qid+' » inconnu dans cette version.'); return; }
+      const apply=()=>{
+        if(obj.patient && (obj.patient.nom||obj.patient.prenom||obj.patient.naissance)) session.patient=Object.assign({nom:"",prenom:"",naissance:"",dateJour:""},obj.patient);
+        STORE[qid]=normalizeQ(qid,obj.data);
+        openQuestionnaire(qid);
+        toast('Questionnaire '+QMAP[qid].title+' repris.');
+      };
+      if(isStarted(qid)){
+        showModal('<h2>Reprendre '+esc(QMAP[qid].title)+' ?</h2><p>Ce questionnaire contient déjà des réponses. Les remplacer par celles du fichier ?</p><div class="mf"><button class="btn ghost" id="cno">Annuler</button><button class="btn" id="cyes">Remplacer</button></div>');
+        document.getElementById('cno').onclick=closeModal;
+        document.getElementById('cyes').onclick=()=>{closeModal();apply();};
+      } else apply();
+    }
+    else if(obj.data && typeof obj.data==='object'){
+      const apply=()=>{
+        session.patient=Object.assign({nom:"",prenom:"",naissance:"",dateJour:""},obj.patient||{});
+        Object.keys(STORE).forEach(k=>delete STORE[k]);
+        let count=0;
+        Object.keys(obj.data).forEach(qid=>{ if(QMAP[qid]){ STORE[qid]=normalizeQ(qid,obj.data[qid]); count++; } });
+        goHome();
+        toast('Session reprise : '+count+' questionnaire(s).');
+      };
+      const hasExisting = session.patient.nom||session.patient.prenom||Object.keys(STORE).length;
+      if(hasExisting){
+        showModal('<h2>Reprendre une session ?</h2><p>La session en cours (patient + questionnaires) sera remplacée par le contenu du fichier.</p><div class="mf"><button class="btn ghost" id="cno">Annuler</button><button class="btn" id="cyes">Remplacer</button></div>');
+        document.getElementById('cno').onclick=closeModal;
+        document.getElementById('cyes').onclick=()=>{closeModal();apply();};
+      } else apply();
+    }
+    else toast('Fichier non reconnu.');
+  };
+  reader.readAsText(file);
+}
+function normalizeQ(qid,data){
+  const q=QMAP[qid];
+  if(q.kind==='diva'){
+    const base=newDivaState(q);
+    const src=data&&data.diva;
+    if(src){
+      if(src.symp) Object.keys(base.symp).forEach(k=>{ if(src.symp[k]) base.symp[k]=Object.assign(base.symp[k],src.symp[k]); });
+      if(src.func) base.func=Object.assign(base.func,src.func);
+    }
+    return base;
+  }
+  const n=q.items.length;
+  const ans=new Array(n).fill(null), comments=new Array(n).fill("");
+  if(data){
+    if(Array.isArray(data.ans)) for(let i=0;i<n;i++) ans[i]=(i<data.ans.length && data.ans[i]!=null)?data.ans[i]:null;
+    if(Array.isArray(data.comments)) for(let i=0;i<n;i++) comments[i]=(i<data.comments.length && data.comments[i]!=null)?data.comments[i]:"";
+  }
+  const out={ans,comments};
+  if(q.annexes){
+    const a={chk:{}, cibles:{obs:["","","",""],comp:["","","",""],evit:""}};
+    const src=data&&data.annex;
+    if(src){
+      if(src.chk && typeof src.chk==='object'){ Object.keys(src.chk).forEach(k=>{ const s=src.chk[k]||{}; a.chk[k]={a:!!s.a,p:!!s.p,c:typeof s.c==='string'?s.c:""}; }); }
+      if(src.cibles){
+        ['obs','comp'].forEach(g=>{ if(Array.isArray(src.cibles[g])) for(let i=0;i<4;i++) a.cibles[g][i]=src.cibles[g][i]||""; });
+        if(typeof src.cibles.evit==='string') a.cibles.evit=src.cibles.evit;
+      }
+    }
+    out.annex=a;
+  }
+  return out;
+}
+
+/* ============================================================
+   PDF (impression)
+   ============================================================ */
+function printScope(scope){
+  let qids;
+  if(scope==='q'){ if(!session.current){toast('Ouvrez un questionnaire d\'abord.');return;} qids=[session.current]; }
+  else { qids=REGISTRY.filter(q=>isStarted(q.id)).map(q=>q.id); if(!qids.length){toast('Aucun questionnaire entamé à imprimer.');return;} }
+
+  const holder=document.createElement('div'); holder.id='printHolder';
+  qids.forEach(qid=>{ const sec=document.createElement('section'); sec.className='printq'; sec.innerHTML=(QMAP[qid].kind==='diva'?divaResultsHTML(QMAP[qid]):resultsHTML(QMAP[qid])); holder.appendChild(sec); });
+
+  // références (en petit, en fin de document)
+  let refHTML='';
+  qids.forEach(qid=>{
+    const q=QMAP[qid];
+    if(q.references && q.references.length){
+      refHTML+='<div class="refblock"><div class="reftitle">'+esc(q.title)+' — Références</div>';
+      if(q.source) refHTML+='<div class="refsrc">'+esc(q.source)+'</div>';
+      refHTML+='<ol class="reflist">'+q.references.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ol></div>';
+    }
+  });
+  if(refHTML){ const rf=document.createElement('section'); rf.className='printrefs'; rf.innerHTML=refHTML; holder.appendChild(rf); }
+
+  const prevApp=app.innerHTML; const prevTitle=document.title;
+  app.innerHTML=''; app.appendChild(holder);
+  document.title=(scope==='q'?session.current:'Session')+'_'+safeName('').replace(/^_/,'');
+  closeAllPops(); closeNav();
+  window.print();
+  setTimeout(()=>{ document.title=prevTitle; render(); },600);
+}
+
+/* ============================================================
+   POPOVERS / TOAST / MODAL / NAV
+   ============================================================ */
+const popSave=document.getElementById('popSave');
+const popPdf=document.getElementById('popPdf');
+const toolsEl=document.querySelector('.tools');
+function placePop(pop,btn,align){
+  if(align==='right'){ pop.style.left='auto'; pop.style.right=(toolsEl.clientWidth-(btn.offsetLeft+btn.offsetWidth))+'px'; }
+  else { pop.style.right='auto'; pop.style.left=btn.offsetLeft+'px'; }
+}
+function closeAllPops(){ popSave.classList.remove('show'); popPdf.classList.remove('show'); }
+function togglePop(pop,btn,align){ const open=pop.classList.contains('show'); closeAllPops(); if(!open){ placePop(pop,btn,align); pop.classList.add('show'); } }
+
+document.getElementById('btnSave').onclick=function(e){e.stopPropagation();togglePop(popSave,this,'left');};
+document.getElementById('btnPdf').onclick=function(e){e.stopPropagation();togglePop(popPdf,this,'right');};
+document.getElementById('btnResume').onclick=function(){closeAllPops();fileInput.value='';fileInput.click();};
+fileInput.onchange=e=>{ const f=e.target.files[0]; if(f) resumeFromFile(f); };
+
+popSave.querySelectorAll('.pitem').forEach(b=>b.onclick=()=>{
+  const sc=b.dataset.scope; closeAllPops();
+  if(sc==='q'){ if(!session.current){toast('Ouvrez un questionnaire d\'abord.');return;} saveQuestionnaire(session.current); }
+  else saveSession();
+});
+popPdf.querySelectorAll('.pitem').forEach(b=>b.onclick=()=>{ const sc=b.dataset.scope; closeAllPops(); if(sc==='divafull') printDivaFull(); else printScope(sc); });
+
+document.addEventListener('click',e=>{ if(!e.target.closest('.tools')) closeAllPops(); });
+
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>toastEl.classList.remove('show'),2600); }
+function showModal(html){ modalbox.innerHTML=html; modal.classList.add('show'); }
+function closeModal(){ modal.classList.remove('show'); }
+modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+
+/* segmented toggle + chip + brand */
+seg.addEventListener('click',e=>{ const b=e.target.closest('button[data-v]'); if(b) setView(b.dataset.v); });
+patientChip.onclick=goHome;
+document.getElementById('brandHome').onclick=goHome;
+
+/* mobile nav */
+const scrim=document.getElementById('scrim');
+function openNav(){document.body.classList.add('nav-open');}
+function closeNav(){document.body.classList.remove('nav-open');}
+document.getElementById('hamb').onclick=()=>document.body.classList.toggle('nav-open');
+scrim.onclick=closeNav;
+
+/* go */
+applyAccent(HOME_PAL);
+render();
+</script>
+</body></html>
